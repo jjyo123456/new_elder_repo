@@ -6,7 +6,7 @@
     <data>
         <variable
             name="matched_user_profile_binding"
-            type="com.example.elderprojectfinal.the_main_workout_match_activity" />
+            type="com.example.test_application_for_elder_project.The_main_workout_match_activityKt" />
     </data>
 <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"

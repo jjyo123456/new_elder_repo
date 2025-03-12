@@ -7,7 +7,7 @@
     <data>
         <variable
             name="main_matching-binding"
-            type="com.example.elderprojectfinal.the_main_workout_match_activity" />
+            type="com.example.test_application_for_elder_project.the_main_workout_match_activity" />
     </data>
 
 <androidx.constraintlayout.widget.ConstraintLayout

@@ -33,6 +33,10 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    buildFeatures{
+        dataBinding = true
+    }
 }
 
 dependencies {
@@ -43,7 +47,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
-    implementation(libs.firebase.firestore)
+
 
 
     // Add the dependency for the Firebase Authentication library
@@ -62,7 +66,7 @@ dependencies {
 
 
 
-    implementation (libs.google.webrtc)
+
 
     implementation ("com.mesibo.api:calls:2.7.18+")
 
@@ -83,6 +87,5 @@ dependencies {
 
 
 
-    implementation (libs.mediapipe.tasks.vision)
 
 }

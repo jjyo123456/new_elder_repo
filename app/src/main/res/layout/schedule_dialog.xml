@@ -8,7 +8,7 @@
 
         <variable
             name="schedule_binding_varriable"
-            type="com.example.elderprojectfinal.schedule_dialog" />
+            type="com.example.test_application_for_elder_project.schedule_dialog" />
 
 
     </data>
@@ -45,6 +45,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
+        android:id="@+id/dayspinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"

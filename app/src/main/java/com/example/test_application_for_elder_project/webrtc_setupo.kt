@@ -1,4 +1,4 @@
-package com.example.test_application_for_elder_project
+package com.example.elderprojectfinal
 
 import android.content.Context
 import android.os.Bundle
@@ -10,6 +10,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.elderprojectfinal.databinding.ActivityWebrtcSetupoBinding
 import com.example.elderprojectfinal.databinding.MatchedUserProfileLayoutBinding
+import com.example.test_application_for_elder_project.Sdpobserverimpl
+import com.example.test_application_for_elder_project.databinding.ActivityWebrtcSetupoBinding
+import com.example.test_application_for_elder_project.databinding.MatchedUserProfileLayoutBinding
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -81,9 +84,9 @@ class webrtc_setupo : AppCompatActivity() {
         }
 
 
-       // binding.button5.setOnClickListener({
-       //     matching()
-       // })
+        // binding.button5.setOnClickListener({
+        //     matching()
+        // })
 
 
 
@@ -228,7 +231,7 @@ class webrtc_setupo : AppCompatActivity() {
 
 
     public fun getroomidforuser(userid: String, callback: (String) -> Unit) {
-        val dbref = database.("").child("matched_users")
+        val dbref = database.reference.child("matched_users")
         dbref.child(userid).get().addOnSuccessListener {
             callback(it.value.toString())
         }
