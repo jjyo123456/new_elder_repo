@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.example.test_application_for_elder_project"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.test_application_for_elder_project"
         minSdk = 32
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -67,13 +67,12 @@ dependencies {
     implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
 
 
+    implementation("com.google.firebase:firebase-bom:32.7.1")
 
-    implementation("io.getstream:stream-webrtc-android:1.3.8")
 
     implementation ("com.mesibo.api:calls:2.7.18+")
 
     implementation ("com.google.firebase:firebase-database:20.0.2")
-
 
 
 
@@ -88,7 +87,7 @@ dependencies {
 
 
 
+    }
 
 
 
-}

@@ -28,7 +28,7 @@ class Profile_for_family : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
 
-            load_User_Data()
+           // load_User_Data()
         }
         binding_for_family_layout.changeElderProfile.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {

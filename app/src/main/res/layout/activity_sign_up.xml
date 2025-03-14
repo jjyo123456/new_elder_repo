@@ -17,8 +17,8 @@
 
         <EditText
             android:id="@+id/name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="408dp"
+            android:layout_height="56dp"
             android:layout_marginBottom="28dp"
             android:hint="name"
             app:layout_constraintBottom_toTopOf="@+id/interests"
@@ -28,8 +28,8 @@
 
         <EditText
             android:id="@+id/email"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="416dp"
+            android:layout_height="75dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="417dp"
             android:hint="email"
@@ -52,8 +52,8 @@
 
         <EditText
             android:id="@+id/interests"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="409dp"
+            android:layout_height="59dp"
             android:layout_marginTop="20dp"
             android:hint="interests"
             app:layout_constraintEnd_toEndOf="parent"
@@ -76,21 +76,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Basketball"
-                app:checkable="true" />
+                 />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_music"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Music"
-                app:checkable="true" />
+                 />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_photography"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Photography"
-                app:checkable="true" />
+                 />
         </com.google.android.material.chip.ChipGroup>
 
         <RadioGroup

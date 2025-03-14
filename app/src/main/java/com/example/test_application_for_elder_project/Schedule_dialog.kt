@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.fragment.app.DialogFragment
-import com.example.elderprojectfinal.databinding.ScheduleDialogBinding
 import com.example.test_application_for_elder_project.databinding.ScheduleDialogBinding
 import com.google.firebase.firestore.FirebaseFirestore
 import java.time.LocalTime

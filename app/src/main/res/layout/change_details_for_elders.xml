@@ -6,7 +6,7 @@
     <data>
         <variable
             name="sign_up_activity"
-            type="com.example.elderprojectfinal.Profile_for_family" />
+            type="com.example.test_application_for_elder_project.Profile_for_family" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

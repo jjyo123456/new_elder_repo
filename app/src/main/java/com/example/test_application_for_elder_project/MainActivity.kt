@@ -8,7 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.elderprojectfinal.databinding.ActivityMainBinding
+import com.example.test_application_for_elder_project.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -19,7 +19,7 @@ object UserManager {
 
 class MainActivity : AppCompatActivity() {
 
-    public lateinit var  binding:ActivityMainBinding
+    public lateinit var  binding: ActivityMainBinding
     public var firebaseAuth:FirebaseAuth = FirebaseAuth.getInstance()
     public var firebasefirestore:FirebaseFirestore = FirebaseFirestore.getInstance()
 

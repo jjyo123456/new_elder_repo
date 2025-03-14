@@ -269,8 +269,7 @@ class the_main_workout_match_activity : AppCompatActivity() {
         try {
             var response = apiservie.generateresponse(apiKey, gemini_data_prompt(prompt))
             if(response != null){
-                val responseBody = response.body()
-                responseBody?.handle_response()
+
             }
         }
         catch (e:Exception){
@@ -284,7 +283,7 @@ class the_main_workout_match_activity : AppCompatActivity() {
         suspend fun generateresponse(
             @Query("key") apiKey: String,
             @Body requestBody: gemini_data_prompt
-        ): Response<geminiresponse>
+        )
 
 
     }
