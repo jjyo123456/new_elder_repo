@@ -9,9 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.elderprojectfinal.databinding.ActivityMainBinding
-import com.example.elderprojectfinal.sign_up
-import com.example.elderprojectfinal.the_main_workout_match_activity
-import com.example.test_application_for_elder_project.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -47,8 +44,8 @@ class MainActivity : AppCompatActivity() {
 
 
         binding.logIn.setOnClickListener {
-            var email = binding.editText2.toString().trim()
-            var password = binding.editText.toString().trim()
+            var email = binding.email.toString().trim()
+            var password = binding.password.toString().trim()
 
 
             if (email.isNotEmpty() && password.isNotEmpty()) {
@@ -58,15 +55,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.signUp.setOnClickListener {
-            var i: Intent = Intent(this, sign_up::class.java)
+            var i: Intent = Intent(this, Sign_up::class.java)
             startActivity(i)
         }
 
 
     }
 
-    private fun sign_in(email: String, name: String) {
-        firebaseAuth.signInWithEmailAndPassword(email, name)
+    private fun sign_in(email: String, password: String) {
+        firebaseAuth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     // Get the signed in user's id
@@ -78,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                                 val role = document.getString("role") ?: ""
                                 if (role.isNotEmpty()) {
                                     Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show()
-                                    navigateToHome(role)
+                                     navigateToHome(role)
                                 } else {
                                     Toast.makeText(this, "Role not found", Toast.LENGTH_SHORT).show()
                                 }
@@ -102,7 +99,8 @@ class MainActivity : AppCompatActivity() {
                 startActivity(i)
             }
             "parent" -> {
-
+                var i:Intent = Intent(this,Profile_for_family::class.java)
+                startActivity(i)
             }
             "family" -> {
 
@@ -111,5 +109,17 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Invalid role", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    public fun sign_in_with_coe(){
+        var debref = firebasefirestore.collection("users").document(binding.editextForCode.toString())
+        debref.get().addOnSuccessListener {document->
+            var email  = document.getString("email") as String
+            var password  = document.getString("email") as String
+            sign_in(email,password)
+        }
+            .addOnFailureListener{
+                Toast.makeText(this,"user might not be create",Toast.LENGTH_LONG).show()
+            }
     }
 }

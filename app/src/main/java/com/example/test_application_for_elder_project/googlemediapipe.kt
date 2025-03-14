@@ -19,7 +19,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import com.example.elderprojectfinal.databinding.ActivityWebrtcSetupoBinding
+import com.example.test_application_for_elder_project.R
 import com.example.test_application_for_elder_project.databinding.ActivityWebrtcSetupoBinding
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase

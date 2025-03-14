@@ -1,6 +1,5 @@
-package com.example.elderprojectfinal
+package com.example.test_application_for_elder_project
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -9,38 +8,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.elderprojectfinal.data_classes_for_handelling_gemini_response.Candidates
 import com.example.elderprojectfinal.data_classes_for_handelling_gemini_response.geminiresponse
-import com.example.elderprojectfinal.databinding.ActivityTheMainWorkoutMatchBinding
-import com.example.elderprojectfinal.databinding.MatchedUserProfileLayoutBinding
-import com.example.test_application_for_elder_project.UserManager
-import com.example.test_application_for_elder_project.databinding.ActivityMainBinding
 import com.example.test_application_for_elder_project.databinding.ActivityTheMainWorkoutMatchBinding
 import com.example.test_application_for_elder_project.databinding.MatchedUserProfileLayoutBinding
-import com.example.test_application_for_elder_project.object_for_matching
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.auth.User
-import com.google.firebase.firestore.ktx.toObjects
-import com.google.firebase.firestore.toObject
-import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
 import org.webrtc.*
-import org.webrtc.PeerConnection.IceServer
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -337,29 +318,29 @@ class the_main_workout_match_activity : AppCompatActivity() {
             }
 
 
-            GlobalScope.launch {
-                while (true) {
-                    delay(30000)
-                    val calendar = Calendar.getInstance()
-                    val current_Day = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())
-                    val current_hour = calendar.get(Calendar.HOUR_OF_DAY)
-                    val current_minute = calendar.get(Calendar.MINUTE)
+                GlobalScope.launch {
+                    while (true) {
+                        delay(30000)
+                        val calendar = Calendar.getInstance()
+                        val current_Day = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())
+                        val current_hour = calendar.get(Calendar.HOUR_OF_DAY)
+                        val current_minute = calendar.get(Calendar.MINUTE)
 
-                    val (meetingHour, meetingMinute) = parseTime(start_time)
+                        val (meetingHour, meetingMinute) = parseTime(start_time)
 
 
-                    if (current_Day == bestday && current_hour == meetingHour && current_minute == meetingMinute) {
-                        TODO()
-                        matchedUserProfileLayoutBinding.mainVideoCallButton.visibility =
-                            View.VISIBLE
-                        matchedUserProfileLayoutBinding.mainVideoCallButton.setOnClickListener({
+                        if (current_Day == bestday && current_hour == meetingHour && current_minute == meetingMinute) {
+                            TODO()
+                            matchedUserProfileLayoutBinding.mainVideoCallButton.visibility =
+                                View.VISIBLE
+                            matchedUserProfileLayoutBinding.mainVideoCallButton.setOnClickListener({
 
-                        })
+                            })
+                        }
                     }
+
+
                 }
-
-
-            }
         }
 
         private fun parseTime(time: String): Pair<Int, Int> {

@@ -2,18 +2,18 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
-    
+
     <data>
         <variable
-            name="sign_up_activity"
-            type="com.example.test_application_for_elder_project.sign_up" />
+            name="sign_upActivity"
+            type="com.example.test_application_for_elder_project.Sign_up" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".sign_up">
+        tools:context=".Sign_up">
 
         <EditText
             android:id="@+id/name"
@@ -25,7 +25,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/password" />
-
 
         <EditText
             android:id="@+id/email"
@@ -41,8 +40,8 @@
 
         <EditText
             android:id="@+id/password"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="418dp"
+            android:layout_height="78dp"
             android:layout_marginBottom="22dp"
             android:hint="password"
             app:layout_constraintBottom_toTopOf="@+id/name"
@@ -62,39 +61,9 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/name" />
 
-        <RadioGroup
-            android:id="@+id/radioGroup"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="21dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/interests">
-
-            <RadioButton
-                android:layout_width="match_parent"
-                android:id="@+id/elder_radio"
-                android:layout_height="50dp"
-                android:hint="elder" />
-
-            <RadioButton
-                android:layout_width="match_parent"
-                android:id="@+id/parent"
-                android:layout_height="50dp"
-                android:hint="parent" />
-
-            <RadioButton
-                android:layout_width="match_parent"
-                android:id="@+id/elders_family"
-                android:layout_height="50dp"
-                android:hint="elder's family" />
-
-
-        </RadioGroup>
-
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroup"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="94dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -124,19 +93,45 @@
                 app:checkable="true" />
         </com.google.android.material.chip.ChipGroup>
 
+        <RadioGroup
+            android:id="@+id/radioGroup"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="21dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/interests">
+
+            <RadioButton
+                android:id="@+id/elder_radio"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Elder" />
+
+            <RadioButton
+                android:id="@+id/parent"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Parent" />
+
+            <RadioButton
+                android:id="@+id/elders_family"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Elder's Family" />
+        </RadioGroup>
+
         <Button
             android:id="@+id/button"
             android:layout_width="184dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="204dp"
-            android:hint="sign_up"
+            android:text="Sign Up"
             android:textColorHint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/email" />
-
-
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>

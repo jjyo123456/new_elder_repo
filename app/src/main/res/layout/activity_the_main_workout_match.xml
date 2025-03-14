@@ -6,31 +6,27 @@
 
     <data>
         <variable
-            name="main_matching-binding"
-            type="com.example.test_application_for_elder_project.the_main_workout_match_activity" />
+            name="main_matching_binding"
+            type="com.example.test_application_for_elder_project.The_main_workout_match_activityKt" />
     </data>
 
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".the_main_workout_match_activity">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".the_main_workout_match_activity">
 
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="222dp"
+            android:layout_height="78dp"
+            android:layout_marginBottom="269dp"
+            android:text="find a workout match"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
-        android:id="@+id/button5"
-        android:layout_width="222dp"
-        android:layout_height="78dp"
-        android:layout_marginBottom="269dp"
-        android:hint="find a workout match"
-        android:textColorHint="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-
-
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </layout>

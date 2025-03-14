@@ -8,17 +8,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.elderprojectfinal.the_main_workout_match_activity
+import com.example.elderprojectfinal.databinding.ActivitySignUpBinding
 import com.example.test_application_for_elder_project.databinding.ActivitySignUpBinding
 import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 
-class sign_up : AppCompatActivity() {
-    lateinit var binding:ActivitySignUpBinding
+class Sign_up : AppCompatActivity() {
+    lateinit var binding: ActivitySignUpBinding
     var firebaseFirestore: FirebaseFirestore = FirebaseFirestore.getInstance()
-    var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+     var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     val interests = mutableListOf<String>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +48,7 @@ class sign_up : AppCompatActivity() {
                 if(chips.isChecked){
                     interests.add(chips.text.toString())
                 }
-            }
+        }
 
             var role: Any = when {
                 binding.elderRadio.isChecked-> "elder"
@@ -59,8 +59,18 @@ class sign_up : AppCompatActivity() {
 
                 }
             }
-            // info being sent to sign_up function in order to upload it to firebase
-            sign_up(name,email,password, role.toString())
+
+
+                // If an elder user is logging in using a code
+
+
+
+
+                // If a normal sign-up is happening
+                sign_up(name, email, password, role.toString())
+
+
+
 
 
         }
@@ -95,22 +105,24 @@ class sign_up : AppCompatActivity() {
     }
 
     private fun direct_to_the_respective_page(roleFinal: String){
-        when (roleFinal){
-            "elder" ->{
-                var i: Intent = Intent(this,the_main_workout_match_activity::class.java)
-                startActivity(i)
-            }
-            "parent"->{
+       when (roleFinal){
+           "elder" ->{
+               var i: Intent = Intent(this,the_main_workout_match_activity::class.java)
+               startActivity(i)
+           }
+           "parent"->{
 
-            }
-            "eldersfamily"->{
+           }
+           "eldersfamily"->{
 
-            }
+           }
 
-        }
+       }
 
 
     }
+
+
 
 
 }

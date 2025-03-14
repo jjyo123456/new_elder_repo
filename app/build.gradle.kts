@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -47,6 +48,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
+    implementation(libs.firebase.firestore)
 
 
 
@@ -66,7 +68,7 @@ dependencies {
 
 
 
-
+    implementation("io.getstream:stream-webrtc-android:1.3.8")
 
     implementation ("com.mesibo.api:calls:2.7.18+")
 
@@ -83,6 +85,7 @@ dependencies {
     implementation ("androidx.camera:camera-camera2:1.3.0")
     implementation ("androidx.camera:camera-lifecycle:1.3.0")
     implementation ("androidx.camera:camera-view:1.3.0")
+
 
 
 
