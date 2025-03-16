@@ -1,4 +1,13 @@
 package com.example.test_application_for_elder_project
 
-class object_for_matching(var age:String , var name: String , var interests:Array<String> , var workout_type:String , var weight:String , var fitness_goal:String ) {
+data class ObjectForMatching(
+    var email: String = "",
+    var interests: MutableList<String> = mutableListOf(),
+    var name: String = "",
+    var password: String = "",
+    var role: String = "",
+    var timeSignedIn: String = ""
+) {
+    // No-argument constructor required by Firestore
+    constructor() : this("", mutableListOf(), "", "", "", "")
 }

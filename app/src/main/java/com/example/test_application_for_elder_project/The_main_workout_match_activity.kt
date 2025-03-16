@@ -1,27 +1,37 @@
 package com.example.test_application_for_elder_project
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.Uri.Builder
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.DialogFragment
 import com.example.elderprojectfinal.data_classes_for_handelling_gemini_response.geminiresponse
 import com.example.test_application_for_elder_project.databinding.ActivityTheMainWorkoutMatchBinding
 import com.example.test_application_for_elder_project.databinding.MatchedUserProfileLayoutBinding
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.generationConfig
+import com.google.android.gms.dynamic.SupportFragmentWrapper
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.BuildConfig
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import okhttp3.Response
+import kotlinx.coroutines.withContext
 import org.json.JSONException
 import org.json.JSONObject
-import org.webrtc.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -32,21 +42,25 @@ import java.util.Calendar
 import java.util.Locale
 
 
-@SuppressLint("StaticFieldLeak")
-val firestore:FirebaseFirestore = FirebaseFirestore.getInstance()
-
-@SuppressLint("StaticFieldLeak")
-lateinit var binding_for_activity_main_matching:ActivityTheMainWorkoutMatchBinding
-
-lateinit var bestday:String
-lateinit var start_time:String
-lateinit var end_time:String
 
 
 
 
-@Suppress("UNREACHABLE_CODE")
-class the_main_workout_match_activity : AppCompatActivity() {
+
+
+class The_main_workout_match_activity : AppCompatActivity() {
+
+    val firestore:FirebaseFirestore = FirebaseFirestore.getInstance()
+
+
+    lateinit var binding_for_activity_main_matching:ActivityTheMainWorkoutMatchBinding
+
+    lateinit var bestday:String
+    lateinit var start_time:String
+    lateinit var end_time:String
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +72,10 @@ class the_main_workout_match_activity : AppCompatActivity() {
             insets
         }
 
+
+
+
+
         binding_for_activity_main_matching = ActivityTheMainWorkoutMatchBinding.inflate(layoutInflater)
 
         matchedUserProfileLayoutBinding = MatchedUserProfileLayoutBinding.inflate(layoutInflater)
@@ -67,107 +85,155 @@ class the_main_workout_match_activity : AppCompatActivity() {
 
 
 
-        binding_for_activity_main_matching.button5.setOnClickListener {
+            var button: Button = findViewById<Button>(R.id.button5)
+
+        button.setOnClickListener {
+
             matching()
         }
+
+
 
 
     }
 
 
-    public fun matching() {
-
-        var firebaseauth: FirebaseAuth = FirebaseAuth.getInstance()
-
-        var user_collection = firestore.collection("users")
-        current_user_id = firebaseauth.currentUser.toString()
+    fun matching() {
 
 
+        val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+        val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
+        val userCollection = firestore.collection("users")
+        val currentUserId = firebaseAuth.currentUser?.uid ?: return  // Return if user ID is null
 
-
-        firestore.collection("users").document(UserManager.current_userId.toString())
+        userCollection.document(currentUserId)
             .get()
             .addOnSuccessListener { document ->
-                val user = document.toObject(object_for_matching::class.java)
+                val user = document.toObject(ObjectForMatching::class.java)
 
                 user?.let {
-                    val age_of_user = it.age
-                    val interests: List<String> = it.interests as List<String>
+                    val currentRole = it.role
+                    val interests = it.interests as? List<String> ?: emptyList()
 
-                    if (age_of_user.toInt() > 60) {
-                        user_collection.whereGreaterThanOrEqualTo("age", 10)
-                            .whereLessThanOrEqualTo("age", 18)
-                            .whereArrayContainsAny("interests", interests)
-                            .limit(1)
-                            .get()
-                            .addOnSuccessListener { document_of_match ->
-                                if (!document_of_match.isEmpty) {
-                                    val match = document_of_match.documents[0]
-                                    UserManager.matched_userid = match.id
+                    if (interests.isEmpty()) return@addOnSuccessListener  // No interests = no matching
 
-                                    save_match {
-                                        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                                    }
+                    // Determine the opposite role
+                    val targetRole = if (currentRole == "elder") "parent" else "elder"
 
-                                    setContentView(R.layout.matched_user_profile_layout)
+                    userCollection
+                        .whereEqualTo("role", targetRole)
+                        .whereArrayContainsAny("interests",interests)
+                        .limit(1)
+                        .get()
+                        .addOnSuccessListener { documentOfMatch ->  // documentOfMatch is a QuerySnapshot
+                            val match = documentOfMatch.documents.firstOrNull() // Safe way to get the first match
 
-                                    CoroutineScope(Dispatchers.Default).launch {
-                                        finalize_the_schedule_time()
-                                    }
-                                    Put_in_the_info_for_the_profile()
+                            if (match != null) {
+                                UserManager.matched_userid = match.id
+
+                                Toast.makeText(this,"matched user ${UserManager.matched_userid.toString()}",Toast.LENGTH_LONG).show()
+
+                                save_match{
+                                    Toast.makeText(this,it,Toast.LENGTH_LONG).show()
                                 }
-                            }
-                    } else if (age_of_user.toInt() < 20) {
-                        user_collection.whereGreaterThanOrEqualTo("age", 60)
-                            .whereLessThanOrEqualTo("age", 80)
-                            .whereArrayContainsAny("interests", interests)
-                            .limit(1)
-                            .get()
-                            .addOnSuccessListener { document_of_match ->
-                                if (!document_of_match.isEmpty) {
-                                    val match = document_of_match.documents[0]
-                                    UserManager.matched_userid = match.id
 
-                                    save_match {
-                                        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-                                    }
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
+                                    // Debugging - Check if matched_userid is valid
+                                    Log.d("FirestoreDebug", "Matched User ID: ${UserManager.matched_userid}")
+
+                                    // Check if binding is initialized
+
+
+
+                                    firestore.collection("users").document(UserManager.matched_userid.toString())
+                                        .get()
+                                        .addOnSuccessListener { document ->
+                                            if (document.exists()) {
+                                                Log.d("FirestoreDebug", "Document retrieved: ${document.data}")
+
+                                                    var name = findViewById<TextView>(R.id.name)
+                                                var email = findViewById<TextView>(R.id.email)
+                                                    var interest = findViewById<TextView>(R.id.interests)
+                                                name.setText(document.getString("name"))
+                                                email.setText(document.getString("email"))
+
+                                                val interestsList = document.get("interests") as? List<*>
+                                                interest.text = interestsList?.joinToString(", ") ?: "No interests available"
+
+                                            } else {
+                                                Log.d("FirestoreDebug", "No document found for ID: ${UserManager.matched_userid}")
+                                            }
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.e("FirestoreError", "Error fetching user data: ${e.message}")
+                                        }
                                     setContentView(R.layout.matched_user_profile_layout)
-
-                                    CoroutineScope(Dispatchers.Default).launch {
-                                        finalize_the_schedule_time()
-                                    }
-
                                     Put_in_the_info_for_the_profile()
-                                }
-                            }
-                    }
 
+                                    var schedule_dialog = findViewById<Button>(R.id.schedule_dialog_button)
+                                    schedule_dialog.setOnClickListener{
+                                        val schedule_dialog_insta = Schedule_dialog.newInstance(UserManager.current_userId.toString())
+                                        schedule_dialog_insta.show(supportFragmentManager,"ScheduleDialog")
+                                    }
+                                }
+                            } else {
+                                Log.d("Matching", "No matching user found with role: $targetRole")
+                                Toast.makeText(this, "No matching user found with role: $targetRole", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("FirestoreError", "Error fetching match: ${exception.message}")
+                            Toast.makeText(this, "Error fetching match: ${exception.message}", Toast.LENGTH_LONG).show()
+                        }
                 }
-
-
             }
 
 
+    }
 
-
+    suspend fun call_finalize_schedule(){
+        finalize_the_schedule_time()
+    }
 
         // webrtc section
 
 
     }
 
+
     fun save_match(callback:(String) -> Unit){
-        var firestore:FirebaseFirestore = FirebaseFirestore.getInstance()
+        val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
-        Thread {
+        val matchData = hashMapOf(
+            "matchedUserId" to UserManager.matched_userid.toString(),
+            "timestamp" to System.currentTimeMillis()
+        )
 
-            firestore.collection("users").document(UserManager.current_userId.toString()).collection("matches")
-                .document(UserManager.matched_userid.toString())
-
-            callback("save_succsessfull")
-        }
+        firestore.collection("users")
+            .document(UserManager.current_userId.toString())
+            .collection("matches")
+            .document(UserManager.matched_userid.toString())  // Store match under current user's matches
+            .set(matchData)  // Save data in Firestore
+            .addOnSuccessListener {
+                callback("Match saved successfully!")
+            }
+            .addOnFailureListener { e ->
+                callback("Error saving match: ${e.message}")
+            }
+        firestore.collection("users")
+            .document(UserManager.matched_userid.toString())
+            .collection("matches")
+            .document(UserManager.current_userId.toString())  // Store match under current user's matches
+            .set(matchData)  // Save data in Firestore
+            .addOnSuccessListener {
+                callback("Match saved successfully!")
+            }
+            .addOnFailureListener { e ->
+                callback("Error saving match: ${e.message}")
+            }
     }
 
     fun deletematch() {
@@ -182,8 +248,14 @@ class the_main_workout_match_activity : AppCompatActivity() {
 
     }
 
-    suspend fun finalize_the_schedule_time() {
 
+
+
+
+
+
+    suspend fun finalize_the_schedule_time() {
+        val firestore:FirebaseFirestore = FirebaseFirestore.getInstance()
         var current_user_ref_firebase =
             firestore.collection("users").document(UserManager.current_userId.toString()).collection("schedule")
                 .document("preferences")
@@ -235,67 +307,103 @@ class the_main_workout_match_activity : AppCompatActivity() {
 
     }
 
-    suspend fun sendToGeminiForScheduling(
-        currentUserDays: String,
-        currentUserStartTime: String?,
-        currentUserEndTime: String?,
-        matchedUserDays: String,
-        matchedUserStartTime: Any?,
-        matchedUserEndTime: Any?
-    ) {
-
-        val prompt = """
+suspend fun sendToGeminiForScheduling(
+    currentUserDays: String,
+    currentUserStartTime: String?,
+    currentUserEndTime: String?,
+    matchedUserDays: String,
+    matchedUserStartTime: String?,
+    matchedUserEndTime: String?
+) {
+    val apiKey:String = "AIzaSyDJW69wH1BqmlnSu7XoK9Avhp5v8q_PuE4"
+    val model = GenerativeModel(
+        "gemini-2.0-flash",
+        // Retrieve API key as an environmental variable defined in a Build Configuration
+        // see https://github.com/google/secrets-gradle-plugin for further instructions
+        apiKey,
+        generationConfig = generationConfig {
+            temperature = 1f
+            topK = 40
+            topP = 0.95f
+            maxOutputTokens = 8192
+            responseMimeType = "text/plain"
+        },
+    )
+    val prompt = """
         Find the best available time for two users based on their schedules.
         User 1: Available on $currentUserDays from $currentUserStartTime to $currentUserEndTime
         User 2: Available on $matchedUserDays from $matchedUserStartTime to $matchedUserEndTime
-        Suggest a single best time slot where both users are available.return the answer in Json format like - 
+        Suggest a single best time slot where both users are available. Return the answer in JSON format like - 
         
         {
-        best_day : "Tuesday"
-        start_time : 4:00 AM
-        end_tme : 5:00 AM
+        "best_day": "Tuesday",
+        "start_time": "4:00 AM",
+        "end_time": "5:00 AM"
+        }
     """.trimIndent()
 
+    val baseUrl = "https://generativelanguage.googleapis.com/v1beta/"
 
-        var url: String =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?"
-        val gemini_retrofit =
-            Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create())
-                .build()
+    val retrofit = Retrofit.Builder()
+        .baseUrl(baseUrl)  // ✅ Corrected base URL (ends with '/')
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
 
-        var apiservie = gemini_retrofit.create(geminiapiservice::class.java)
+    val apiService = retrofit.create(GeminiApiService::class.java)
 
-
-        try {
-            var response = apiservie.generateresponse(apiKey, gemini_data_prompt(prompt))
-            if(response != null){
-
-            }
-        }
-        catch (e:Exception){
-
-        }
-    }
-
-    public interface geminiapiservice {
-        @Headers("content-type : application/json")
-        @POST()
-        suspend fun generateresponse(
-            @Query("key") apiKey: String,
-            @Body requestBody: gemini_data_prompt
+    try {
+        val response = apiService.generateResponse(
+            apiKey,
+            GeminiDataPrompt(prompt)
         )
 
+        if (response != null) {
+            GeminiResponseHandler(response).handleResponse()
+        } else {
+            Log.e("GeminiScheduling", "Received null response from API")
+        }
+    } catch (e: Exception) {
+        Log.e("GeminiScheduling", "API request failed: ${e.message}")
+    }
+}
 
+
+
+    // Retrofit API Service
+    interface GeminiApiService {
+        @Headers("Content-Type: application/json")
+        @POST(".")
+        suspend fun generateResponse(
+            @Query("key") apiKey: String,
+            @Body requestBody: GeminiDataPrompt
+        ): GeminiResponse
     }
 
+    // Data Classes
+    data class GeminiDataPrompt(val prompt: String)
 
-    data class gemini_data_prompt(val prompt: String)
+    data class GeminiResponse(
+        val candidates: List<Candidate>?
+    )
 
-    data class GeminiResponseHandler(var response: geminiresponse) {
-        fun handle_response() {
-            // Extracting the actual response text
-            val promptActualResponse =
-                response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.texts?.firstOrNull()
+    data class Candidate(
+        val content: Content?
+    )
+
+    data class Content(
+        val parts: List<Part>?
+    )
+
+    data class Part(
+        val texts: List<String>?
+    )
+
+    // Response Handler
+    class GeminiResponseHandler(private val response: GeminiResponse) {
+
+        fun handleResponse() {
+            val promptActualResponse = response.candidates?.firstOrNull()
+                ?.content?.parts?.firstOrNull()?.texts?.firstOrNull()
 
             if (promptActualResponse.isNullOrEmpty()) {
                 Log.e("GeminiResponseHandler", "Received empty or null response from Gemini")
@@ -303,7 +411,6 @@ class the_main_workout_match_activity : AppCompatActivity() {
             }
 
             try {
-                // Parse JSON only if it’s valid
                 val jsonObject = JSONObject(promptActualResponse)
 
                 val bestDay = jsonObject.optString("best_day", "Unknown")
@@ -312,34 +419,40 @@ class the_main_workout_match_activity : AppCompatActivity() {
 
                 Log.d("GeminiResponseHandler", "Best Day: $bestDay, Start Time: $startTime, End Time: $endTime")
 
+                scheduleMeetingReminder(bestDay, startTime)
+
             } catch (e: JSONException) {
                 Log.e("GeminiResponseHandler", "Error parsing response: ${e.message}")
             }
+        }
 
+        private fun scheduleMeetingReminder(bestDay: String, startTime: String) {
+            CoroutineScope(Dispatchers.Main).launch {
+                while (true) {
+                    delay(30000) // Check every 30 seconds
 
-                GlobalScope.launch {
-                    while (true) {
-                        delay(30000)
-                        val calendar = Calendar.getInstance()
-                        val current_Day = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())
-                        val current_hour = calendar.get(Calendar.HOUR_OF_DAY)
-                        val current_minute = calendar.get(Calendar.MINUTE)
+                    val calendar = Calendar.getInstance()
+                    val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())
+                    val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+                    val currentMinute = calendar.get(Calendar.MINUTE)
 
-                        val (meetingHour, meetingMinute) = parseTime(start_time)
+                    val (meetingHour, meetingMinute) = parseTime(startTime)
 
+                    if (currentDay == bestDay && currentHour == meetingHour && currentMinute == meetingMinute) {
+                        Log.d("GeminiResponseHandler", "Meeting time reached! Showing call button.")
 
-                        if (current_Day == bestday && current_hour == meetingHour && current_minute == meetingMinute) {
-                            TODO()
-                            matchedUserProfileLayoutBinding.mainVideoCallButton.visibility =
-                                View.VISIBLE
-                            matchedUserProfileLayoutBinding.mainVideoCallButton.setOnClickListener({
-
-                            })
+                        // Perform UI updates safely
+                        withContext(Dispatchers.Main) {
+                            matchedUserProfileLayoutBinding?.mainVideoCallButton?.visibility = View.VISIBLE
+                            matchedUserProfileLayoutBinding?.mainVideoCallButton?.setOnClickListener {
+                                Log.d("GeminiResponseHandler", "Video Call Button Clicked!")
+                                // TODO: Implement call initiation logic
+                            }
                         }
+                        break // Stop checking once the meeting time is reached
                     }
-
-
                 }
+            }
         }
 
         private fun parseTime(time: String): Pair<Int, Int> {
@@ -359,8 +472,7 @@ class the_main_workout_match_activity : AppCompatActivity() {
             return Pair(hour, minute)
         }
     }
+fun Put_in_the_info_for_the_profile() {
 
-    public fun Put_in_the_info_for_the_profile(){
-
-    }
 }
+

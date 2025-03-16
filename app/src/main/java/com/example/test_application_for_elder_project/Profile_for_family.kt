@@ -2,160 +2,171 @@ package com.example.test_application_for_elder_project
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.test_application_for_elder_project.databinding.ActivityProfileForElderFinalBinding
 import com.example.test_application_for_elder_project.databinding.ActivityProfileForFamilyBinding
 import com.example.test_application_for_elder_project.databinding.ChangeDetailsForEldersBinding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class Profile_for_family : AppCompatActivity() {
-    var binding_for_family_layout: ActivityProfileForFamilyBinding = ActivityProfileForFamilyBinding.inflate(layoutInflater)
-    var binding_for_elder_layout: ActivityProfileForElderFinalBinding = ActivityProfileForElderFinalBinding.inflate(layoutInflater)
-    var binding_for_elder_change_layout = ChangeDetailsForEldersBinding.inflate(layoutInflater)
-    var db:FirebaseFirestore = FirebaseFirestore.getInstance()
+    private lateinit var bindingForFamily: ActivityProfileForFamilyBinding
+    private lateinit var bindingForElder: ActivityProfileForElderFinalBinding
+    private lateinit var bindingForElderChange: ChangeDetailsForEldersBinding
+    private lateinit var db: FirebaseFirestore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_profile_for_family)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
 
-           // load_User_Data()
-        }
-        binding_for_family_layout.changeElderProfile.setOnClickListener {
+        // Initialize ViewBinding
+        bindingForFamily = ActivityProfileForFamilyBinding.inflate(layoutInflater)
+        bindingForElder = ActivityProfileForElderFinalBinding.inflate(layoutInflater)
+        bindingForElderChange = ChangeDetailsForEldersBinding.inflate(layoutInflater)
+
+        // Set the initial content view (family profile)
+        setContentView(bindingForFamily.root)
+
+        // Initialize Firestore
+        db = FirebaseFirestore.getInstance()
+
+        // Load the user's profile data from Firestore
+        loadUserData()
+
+        // Handle the "Change Elder Profile" button click
+        bindingForFamily.changeElderProfile.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
-                elder_user_data()
+                elderUserData()
             }
-
-
-            // Replace the root view with the new layout
-            setContentView(binding_for_elder_layout.root)
         }
 
-        binding_for_elder_layout.changeElderProfile.setOnClickListener {
+        // Handle updating elder details
+        bindingForElder.changeElderProfile.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 updateUserData()
             }
-
-            setContentView(binding_for_elder_change_layout.root)
         }
-
-
     }
 
-private fun load_User_Data() {
-    db.collection("users").document(UserManager.current_userId.toString()).get()
-        .addOnSuccessListener { document ->
-            if (document.exists()) {
-                val name = document.getString("name") ?: "No Name"
-                val email = document.getString("email") ?: "No Email"
-                val interests = document.get("interests") as? List<String> ?: emptyList()
-
-                binding_for_family_layout.name.setText(name)
-                binding_for_family_layout.email.setText(email)
-
-                binding_for_family_layout.interests.setText(interests.joinToString(","))
-            }
-        }
-}
-
-    fun elder_user_data() {
+    private fun loadUserData() {
         db.collection("users").document(UserManager.current_userId.toString()).get()
             .addOnSuccessListener { document ->
-               var managed_elder = document.get("managed_elder") as? Map<*, *>
-                var elder_id = managed_elder?.get("elder_id") as? String
-                if(elder_id != null) {
-                    db.collection("users").document(elder_id.toString()).get()
-                        .addOnSuccessListener { document ->
-                            binding_for_elder_layout.name.setText(
-                                document.getString("name") ?: "No Name"
-                            )
-                            binding_for_elder_layout.email.setText(document.getString("email"))
-                            binding_for_elder_layout.interests.setText(
-                                (document.getString("interests") as? List<String>
-                                    ?: emptyList()).joinToString(",")
-                            )
-                        }
+                if (document.exists()) {
+                    val name = document.getString("name") ?: "No Name"
+                    val email = document.getString("email") ?: "No Email"
+                    val interests = document.get("interests") as? List<String> ?: emptyList()
 
-
-            }
-                else {
-                    setContentView(binding_for_elder_change_layout.root)
-                    binding_for_elder_change_layout.updateDetailsElders.hint = "save_details"
-                    binding_for_elder_change_layout.updateDetailsElders.setOnClickListener {
-                        createElderProfile()
+                    runOnUiThread {
+                        bindingForFamily.name.setText(name)
+                        bindingForFamily.email.setText(email)
+                        bindingForFamily.interests.setText(interests.joinToString(", "))
                     }
                 }
             }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load user data", Toast.LENGTH_SHORT).show()
             }
+    }
 
+    private fun elderUserData() {
+        db.collection("users").document(UserManager.current_userId.toString()).get()
+            .addOnSuccessListener { document ->
+                val managedElder = document.get("managed_elder") as? Map<*, *>
+                val elderId = managedElder?.get("elder_id") as? String
 
-    fun updateUserData() {
-        val newName = binding_for_elder_change_layout.name
-        val newEmail = binding_for_elder_change_layout.email
-        val newInterests = binding_for_elder_change_layout.interests.text.split(',').map{it.trim()}
+                if (elderId != null) {
+                    db.collection("users").document(elderId).get()
+                        .addOnSuccessListener { elderDoc ->
+                            runOnUiThread {
+                                bindingForElder.name.setText(elderDoc.getString("name") ?: "No Name")
+                                bindingForElder.email.setText(elderDoc.getString("email"))
+                                bindingForElder.interests.setText(
+                                    (elderDoc.get("interests") as? List<String> ?: emptyList()).joinToString(", ")
+                                )
 
-        val updates = hashMapOf(
+                                // Now show the elder's profile view
+                                setContentView(bindingForElder.root)
+                            }
+                        }
+                } else {
+                    runOnUiThread {
+                        setContentView(bindingForElderChange.root)
+                        bindingForElderChange.updateDetailsElders.hint = "Save Details"
+                        bindingForElderChange.updateDetailsElders.setOnClickListener {
+                            createElderProfile()
+                        }
+                    }
+                }
+            }
+    }
+
+    private fun updateUserData() {
+        val newName = bindingForElderChange.name.text.toString()
+        val password = bindingForElderChange.password.text.toString()
+        val newEmail = bindingForElderChange.email.text.toString()
+        val newInterests = bindingForElderChange.interests.text.toString().split(",").map { it.trim() }
+
+        val updates = mapOf(
             "name" to newName,
+            "password" to password,
             "email" to newEmail,
             "interests" to newInterests
         )
 
         db.collection("users").document(UserManager.current_userId.toString()).update(updates)
             .addOnSuccessListener {
-                binding_for_elder_layout.name.text = newName.toString()
-                binding_for_elder_layout.email.text= newEmail.toString()
-                binding_for_elder_layout.interests.text = newInterests.joinToString(", ")
-                Toast.makeText(this, "Updated Successfully", Toast.LENGTH_SHORT).show()
+                runOnUiThread {
+                    bindingForElder.name.text = newName
+                    bindingForElder.email.text = newEmail
+                    bindingForElder.interests.text = newInterests.joinToString(", ")
+                    Toast.makeText(this, "Updated Successfully", Toast.LENGTH_SHORT).show()
+                }
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Update Failed", Toast.LENGTH_SHORT).show()
             }
     }
 
-    fun createElderProfile() {
+    private fun createElderProfile() {
         CoroutineScope(Dispatchers.IO).launch {
-            val elderRef = db.collection("users").document() // Auto-generated ID
-            val elderId = elderRef.id  // This will be used as the login code
+            val elderRef = db.collection("users").document()
+            val elderId = elderRef.id
 
-            val elderData = hashMapOf(
-                "name" to binding_for_elder_change_layout.name.text.toString(),
-                "email" to binding_for_elder_change_layout.email.text.toString(),
-                "interests" to binding_for_elder_change_layout.interests.text.split(',')
-                    .map { it.trim() },
-                "role" to "elder",  // Role for differentiation
-                "managed_by" to UserManager.current_userId.toString() // Link to family member
+            val elderData = mapOf(
+                "name" to bindingForElderChange.name.text.toString(),
+                "password" to bindingForElderChange.password.text.toString(),
+                "email" to bindingForElderChange.email.text.toString(),
+                "interests" to bindingForElderChange.interests.text.toString().split(",").map { it.trim() },
+                "role" to "elder",
+                "managed_by" to UserManager.current_userId.toString()
             )
 
             elderRef.set(elderData)
                 .addOnSuccessListener {
-                    saveElderIdForFamily(elderId)  // Save elderId in family member's profile
-                    binding_for_elder_change_layout.textView2.text = elderId
+                    saveElderIdForFamily(elderId)
+                    runOnUiThread {
+                        bindingForElderChange.textView2.text = elderId
+
+                        UserManager.firebaseAuth.createUserWithEmailAndPassword(bindingForElderChange.email.text.toString(),bindingForElderChange.password.text.toString())
+                    }
                 }
                 .addOnFailureListener {
-                }
-
-        }
-    }
-
-    // Store the elder's ID in the family member’s profile
-    fun saveElderIdForFamily(elderId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val familyUpdate = hashMapOf("managed_elder" to elderId)
-
-            db.collection("users").document(UserManager.current_userId.toString())
-                .update(familyUpdate as Map<String, Any>)
-                .addOnSuccessListener {
+                    Toast.makeText(this@Profile_for_family, "Failed to create elder profile", Toast.LENGTH_SHORT).show()
                 }
         }
     }
 
+    private fun saveElderIdForFamily(elderId: String) {
+
+        db.collection("users").document(UserManager.current_userId.toString())
+            .update(mapOf("managed_elder" to elderId))
+            .addOnSuccessListener {
+                Toast.makeText(this, "Elder linked successfully", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to link elder", Toast.LENGTH_SHORT).show()
+            }
+    }
 }

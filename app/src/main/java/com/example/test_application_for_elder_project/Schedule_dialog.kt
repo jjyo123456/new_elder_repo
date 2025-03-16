@@ -1,129 +1,131 @@
 package com.example.test_application_for_elder_project
 
+import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.fragment.app.DialogFragment
 import com.example.test_application_for_elder_project.databinding.ScheduleDialogBinding
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
-class Schedule_dialog(var userid:String, context: Context) :DialogFragment() {
+open class Schedule_dialog : DialogFragment() {
 
+    private lateinit var binding: ScheduleDialogBinding
+    private lateinit var firebaseFirestore: FirebaseFirestore
+    private lateinit var userid: String
 
-    var binding_schedule_dialog: ScheduleDialogBinding = ScheduleDialogBinding.inflate(LayoutInflater.from(context))
+    private var calendar: Calendar = Calendar.getInstance()
+    private var defaultHour: Int = calendar.get(Calendar.HOUR_OF_DAY)
+    private var defaultMinute: Int = calendar.get(Calendar.MINUTE)
 
-    var firebaseFirestore:FirebaseFirestore = FirebaseFirestore.getInstance()
+    private var start_time: String = "00:00"
+    private var end_time: String = "00:00"
+    private var selected_day: String = "monday" // Default value
 
-    var calendar:Calendar = Calendar.getInstance()
+    companion object {
+        fun newInstance(userid: String): Schedule_dialog {
+            val fragment = Schedule_dialog()
+            val args = Bundle()
+            args.putString("userid", userid)
+            fragment.arguments = args
+            return fragment
+        }
+    }
 
-    public var defaulthour = calendar.get(Calendar.HOUR_OF_DAY)
-    public var defaultminute = calendar.get(Calendar.MINUTE)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        userid = arguments?.getString("userid") ?: ""
+        firebaseFirestore = FirebaseFirestore.getInstance()
+    }
 
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        binding = ScheduleDialogBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
-    private lateinit var start_time:String
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-    private lateinit var end_time:String
+        // Setup Spinner
+        val spinner = binding.daySpinner
+        val daysArray = listOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+        val adapterSpinner = ArrayAdapter(requireContext(), androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, daysArray)
+        spinner.adapter = adapterSpinner
 
-    private lateinit var selected_day:String
-
-
-        init {
-
-            val spinner = binding_schedule_dialog.daySpinner
-            val array = listOf("monday","tuesday","wednesday","thursday","friday","saturday","sunday")
-
-            var adapter_spinner = ArrayAdapter(context, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item,array)
-
-            spinner.adapter = adapter_spinner
-            
-            spinner.onItemClickListener = object : AdapterView.OnItemClickListener {
-                override fun onItemClick(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    selected_day= parent?.getItemAtPosition(position).toString()
-                }
-
-            }
-            binding_schedule_dialog.finalizeSchedule.setOnClickListener {
-            schedule_upload(start_time,end_time)
-            }
-            TODO()
-            binding_schedule_dialog.button3.setOnClickListener {
-                start_time_clock_to_schedule { selectedTime ->
-                    start_time = selectedTime
-                }
-            }
-            TODO()
-            binding_schedule_dialog.button4.setOnClickListener {
-                end_time_scheduler { selected_end_time ->
-                    end_time = selected_end_time.toString()
-                }
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selected_day = parent?.getItemAtPosition(position).toString()
             }
 
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
+        // Time Pickers
+        binding.button3.setOnClickListener {
+            showTimePicker { selectedTime -> start_time = selectedTime }
+        }
 
+        binding.button4.setOnClickListener {
+            showTimePicker { selectedTime -> end_time = selectedTime }
+        }
 
-     fun end_time_scheduler(onTimeSelected: (String) -> Unit) {
-         TODO()
-        val defaultHour = 12
-        val defaultMinute = 0
-
-        val timePicker = TimePickerDialog(context, { _, selectedHour, selectedMinute ->
-            val selectedTime = LocalTime.of(selectedHour, selectedMinute)
-            val formatter = DateTimeFormatter.ofPattern("HH:mm") // Correct format
-
-            val formattedTime = selectedTime.format(formatter)
-            onTimeSelected(formattedTime)  // Return selected time via callback
-        }, defaultHour, defaultMinute, true)
-
-        timePicker.show()
+        // Upload Schedule
+        binding.finalizeSchedule.setOnClickListener {
+            scheduleUpload()
+        }
     }
-    private fun start_time_clock_to_schedule(onTimeSelected: (String) -> Unit) {
-        TODO()
-        val defaultHour = 12
-        val defaultMinute = 0
 
-        val timePicker = TimePickerDialog(context, { _, selectedHour, selectedMinute ->
+    private fun showTimePicker(onTimeSelected: (String) -> Unit) {
+        val timePicker = TimePickerDialog(requireContext(), { _, selectedHour, selectedMinute ->
             val selectedTime = LocalTime.of(selectedHour, selectedMinute)
-            val formatter = DateTimeFormatter.ofPattern("HH:mm")  // Correct format
-
+            val formatter = DateTimeFormatter.ofPattern("HH:mm")
             val formattedTime = selectedTime.format(formatter)
-            onTimeSelected(formattedTime)  // Return selected time
+            onTimeSelected(formattedTime)
         }, defaultHour, defaultMinute, true)
 
         timePicker.show()
     }
 
+    private fun scheduleUpload() {
+        if (UserManager.current_userId.toString().isEmpty()) return  // Prevent null userid issue
 
-
-
-    private fun schedule_upload( start_time:String, end_time:String) {
-
-        var schedule_hashmap = hashMapOf(
+        val scheduleHashMap = hashMapOf(
             "selected_day" to selected_day,
             "start_time" to start_time,
             "end_time" to end_time
         )
 
-        var user_ref_firebase = firebaseFirestore.collection("users").document(UserManager.current_userId.toString()).collection("schedule").document("preferences")
+        val userRef = firebaseFirestore.collection("users")
+            .document(userid)
+            .collection("schedule")
+            .document("preferences")
 
-        user_ref_firebase.set(schedule_hashmap).addOnSuccessListener {
-
+        userRef.set(scheduleHashMap).addOnSuccessListener {
+            var finalize_schedule = The_main_workout_match_activity()
+            CoroutineScope(Dispatchers.IO).launch {
+                finalize_schedule.call_finalize_schedule()
+            }
+            dismiss()  // Close dialog on success
         }
-
-
-
     }
 
-
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        return super.onCreateDialog(savedInstanceState).apply {
+            setCanceledOnTouchOutside(false)  // Prevent dismiss on outside touch
+        }
+    }
 }

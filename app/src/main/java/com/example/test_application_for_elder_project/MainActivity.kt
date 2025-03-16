@@ -14,49 +14,48 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 object UserManager {
     var current_userId: String? = null
-    var matched_userid:String? = null
+    var matched_userid: String? = null
+    val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 }
 
 class MainActivity : AppCompatActivity() {
 
-    public lateinit var  binding: ActivityMainBinding
-    public var firebaseAuth:FirebaseAuth = FirebaseAuth.getInstance()
-    public var firebasefirestore:FirebaseFirestore = FirebaseFirestore.getInstance()
-
+    private lateinit var binding: ActivityMainBinding
+    public val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private val firebasefirestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
+
+        binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
+        setContentView(binding.root)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-
-
-
-
-
-        binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
-        setContentView(binding.root)
-
-
         binding.logIn.setOnClickListener {
-            var email = binding.email.toString().trim()
-            var password = binding.password.toString().trim()
+            val email = binding.email.text.toString().trim()
+            val password = binding.password.text.toString().trim()
+            val code = binding.editextForCode.text.toString().trim()
 
-
-            if (email.isNotEmpty() && password.isNotEmpty()) {
+            if(code.isNotEmpty()){
+                sign_in_with_code()
+            }
+            else if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
+            } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "Invalid email format", Toast.LENGTH_SHORT).show()
+            } else {
                 sign_in(email, password)
             }
-
         }
 
         binding.signUp.setOnClickListener {
-            var i: Intent = Intent(this, Sign_up::class.java)
-            startActivity(i)
+            startActivity(Intent(this, Sign_up::class.java))
         }
 
 
@@ -66,26 +65,27 @@ class MainActivity : AppCompatActivity() {
         firebaseAuth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Get the signed in user's id
-                    UserManager.current_userId = firebaseAuth.currentUser?.uid ?: return@addOnCompleteListener
-                    // Retrieve the user's document from Firestore
-                    firebasefirestore.collection("users").document(UserManager.current_userId.toString()).get()
-                        .addOnSuccessListener { document ->
-                            if (document.exists()) {
-                                val role = document.getString("role") ?: ""
-                                if (role.isNotEmpty()) {
-                                    Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show()
-                                     navigateToHome(role)
+                    UserManager.current_userId = firebaseAuth.currentUser?.uid
+                    UserManager.current_userId?.let { userId ->
+                        firebasefirestore.collection("users").document(userId).get()
+                            .addOnSuccessListener { document ->
+                                if (document.exists()) {
+                                    val role = document.getString("role") ?: ""
+                                    if (role.isNotEmpty()) {
+                                        Toast.makeText(this, "Sign in successful", Toast.LENGTH_SHORT).show()
+
+                                        navigateToHome(role)
+                                    } else {
+                                        Toast.makeText(this, "Role not found", Toast.LENGTH_SHORT).show()
+                                    }
                                 } else {
-                                    Toast.makeText(this, "Role not found", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this, "User data not found", Toast.LENGTH_SHORT).show()
                                 }
-                            } else {
-                                Toast.makeText(this, "User data not found", Toast.LENGTH_SHORT).show()
                             }
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Failed to get user data: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(this, "Failed to get user data: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                    } ?: Toast.makeText(this, "User ID not found", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "Sign in failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -93,33 +93,52 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateToHome(role: String) {
-        when (role) {
-            "elder" -> {
-                var i:Intent = Intent(this,the_main_workout_match_activity::class.java)
-                startActivity(i)
+        val intent = when (role) {
+            "elder" ->{var i= Intent(this, The_main_workout_match_activity::class.java)
+            startActivity(i)
             }
+
             "parent" -> {
-                var i:Intent = Intent(this,Profile_for_family::class.java)
+                var i = Intent(this, The_main_workout_match_activity::class.java)
                 startActivity(i)
             }
             "family" -> {
-
+                var i = Intent(this,Profile_for_family::class.java)
+                startActivity(i)
             }
             else -> {
                 Toast.makeText(this, "Invalid role", Toast.LENGTH_SHORT).show()
+                return
             }
         }
+     //   startActivity(intent)
     }
 
-    public fun sign_in_with_coe(){
-        var debref = firebasefirestore.collection("users").document(binding.editextForCode.toString())
-        debref.get().addOnSuccessListener {document->
-            var email  = document.getString("email") as String
-            var password  = document.getString("email") as String
-            sign_in(email,password)
+    private fun sign_in_with_code() {
+        val code = binding.editextForCode.text.toString().trim()
+
+        if (code.isEmpty()) {
+            Toast.makeText(this, "Please enter a code", Toast.LENGTH_LONG).show()
+            return
         }
-            .addOnFailureListener{
-                Toast.makeText(this,"user might not be create",Toast.LENGTH_LONG).show()
+
+        firebasefirestore.collection("users").document(code).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val email = document.getString("email") ?: ""
+                    val password = document.getString("password") ?: ""
+
+                    if (email.isNotEmpty() && password.isNotEmpty()) {
+                        sign_in(email, password)
+                    } else {
+                        Toast.makeText(this, "Invalid email or password", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    Toast.makeText(this, "User not found", Toast.LENGTH_LONG).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to fetch user", Toast.LENGTH_LONG).show()
             }
     }
 }

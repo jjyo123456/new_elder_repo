@@ -17,121 +17,103 @@
 
         <EditText
             android:id="@+id/name"
-            android:layout_width="408dp"
-            android:layout_height="56dp"
-            android:layout_marginBottom="28dp"
-            android:hint="name"
-            app:layout_constraintBottom_toTopOf="@+id/interests"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/password" />
-
-        <EditText
-            android:id="@+id/email"
-            android:layout_width="416dp"
-            android:layout_height="75dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="417dp"
-            android:hint="email"
-            app:layout_constraintBottom_toTopOf="@+id/button"
+            android:layout_width="406dp"
+            android:layout_height="71dp"
+            android:layout_marginTop="55dp"
+            android:hint="Name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
-            android:id="@+id/password"
-            android:layout_width="418dp"
-            android:layout_height="78dp"
-            android:layout_marginBottom="22dp"
-            android:hint="password"
-            app:layout_constraintBottom_toTopOf="@+id/name"
+            android:id="@+id/email"
+            android:layout_width="411dp"
+            android:layout_height="82dp"
+            android:layout_marginTop="40dp"
+            android:hint="Email"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/email" />
-
-        <EditText
-            android:id="@+id/interests"
-            android:layout_width="409dp"
-            android:layout_height="59dp"
-            android:layout_marginTop="20dp"
-            android:hint="interests"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/name" />
+
+        <EditText
+            android:id="@+id/password"
+            android:layout_width="416dp"
+            android:layout_height="81dp"
+            android:layout_marginTop="29dp"
+            android:hint="Password"
+            android:inputType="textPassword"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/email" />
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroup"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="94dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginTop="40dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/password"
             app:singleSelection="false">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_basketball"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Basketball"
-                 />
+                android:checkable="true"
+                android:text="Basketball" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_music"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Music"
-                 />
+                android:checkable="true"
+                android:text="Music" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_photography"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Photography"
-                 />
+                android:checkable="true"
+                android:text="Photography" />
         </com.google.android.material.chip.ChipGroup>
 
         <RadioGroup
             android:id="@+id/radioGroup"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="21dp"
+            android:layout_marginTop="28dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/interests">
+            app:layout_constraintTop_toBottomOf="@+id/chipGroup">
 
             <RadioButton
-                android:id="@+id/elder_radio"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:id="@+id/elderRadio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="Elder" />
 
             <RadioButton
                 android:id="@+id/parent"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="Parent" />
 
             <RadioButton
-                android:id="@+id/elders_family"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:id="@+id/eldersFamily"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="Elder's Family" />
         </RadioGroup>
 
         <Button
             android:id="@+id/button"
-            android:layout_width="184dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="204dp"
+            android:layout_marginBottom="107dp"
             android:text="Sign Up"
-            android:textColorHint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            />
+            app:layout_constraintStart_toStartOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </layout>

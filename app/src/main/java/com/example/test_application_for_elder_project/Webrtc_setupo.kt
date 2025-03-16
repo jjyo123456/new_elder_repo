@@ -38,7 +38,7 @@ import org.webrtc.VideoTrack
 
 val database = FirebaseDatabase.getInstance()
 
-val apiKey:String = "AIzaSyDJW69wH1BqmlnSu7XoK9Avhp5v8q_PuE4"
+
 
 var url:String = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?"
 
