@@ -131,7 +131,7 @@ class Sign_up : AppCompatActivity() {
             else -> null
         }
         intent?.let {
-            startActivity(it as Intent?) }
+            startActivity(intent as Intent?) }
     }
 
     private fun showToast(message: String) {

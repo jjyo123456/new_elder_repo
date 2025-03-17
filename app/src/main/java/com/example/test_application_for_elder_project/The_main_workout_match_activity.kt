@@ -1,49 +1,42 @@
 package com.example.test_application_for_elder_project
-import android.annotation.SuppressLint
-import android.content.Context
-import android.net.Uri.Builder
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.DialogFragment
 import com.example.elderprojectfinal.data_classes_for_handelling_gemini_response.geminiresponse
 import com.example.test_application_for_elder_project.databinding.ActivityTheMainWorkoutMatchBinding
 import com.example.test_application_for_elder_project.databinding.MatchedUserProfileLayoutBinding
+import com.example.test_application_for_elder_project.test_object.main_video_call_button
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
-import com.google.android.gms.dynamic.SupportFragmentWrapper
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.BuildConfig
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.Headers
-import retrofit2.http.POST
-import retrofit2.http.Query
 import java.util.Calendar
 import java.util.Locale
 
 
 
-
+object test_object{
+    lateinit var test_response:TextView
+    lateinit var main_video_call_button:Button
+}
 
 
 
@@ -61,7 +54,6 @@ class The_main_workout_match_activity : AppCompatActivity() {
 
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -72,16 +64,11 @@ class The_main_workout_match_activity : AppCompatActivity() {
             insets
         }
 
-
-
-
-
         binding_for_activity_main_matching = ActivityTheMainWorkoutMatchBinding.inflate(layoutInflater)
 
         matchedUserProfileLayoutBinding = MatchedUserProfileLayoutBinding.inflate(layoutInflater)
 
         matchedUserProfileLayoutBinding.mainVideoCallButton.visibility = View.GONE
-
 
 
 
@@ -91,11 +78,83 @@ class The_main_workout_match_activity : AppCompatActivity() {
 
             matching()
         }
-
-
-
-
     }
+
+
+
+
+
+
+
+    public fun test_meeting_scheduler(){
+        allow_video_call()
+    }
+
+
+    // schedule the meeting related things after receiving the response from gemin
+    private fun scheduleMeetingReminder(bestDay: String, startTime: String) {
+        allow_video_call()
+        CoroutineScope(Dispatchers.Main).launch {
+            while (true) {
+                delay(30000) // Check every 30 seconds
+
+                val calendar = Calendar.getInstance()
+                val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())
+                val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+                val currentMinute = calendar.get(Calendar.MINUTE)
+
+                val (meetingHour, meetingMinute) = parseTime(startTime)
+
+                if (currentDay == bestDay && currentHour == meetingHour && currentMinute == meetingMinute) {
+                    Log.d("GeminiResponseHandler", "Meeting time reached! Showing call button.")
+
+                    // Perform UI updates safely
+                    withContext(Dispatchers.Main) {
+                        matchedUserProfileLayoutBinding?.mainVideoCallButton?.visibility = View.VISIBLE
+
+
+                        // Start the WebRTC setup activity
+
+                    }
+                    break // Stop checking once the meeting time is reached
+                }
+            }
+        }
+    }
+
+
+    private fun parseTime(time: String): Pair<Int, Int> {
+        val timeParts = time.split(" ")
+        val timeValues = timeParts[0].split(":").map { it.toInt() }
+        val isPM = timeParts[1].equals("PM", ignoreCase = true)
+
+        var hour = timeValues[0]
+        val minute = timeValues.getOrElse(1) { 0 }
+
+        if (isPM && hour != 12) {
+            hour += 12
+        } else if (!isPM && hour == 12) {
+            hour = 0
+        }
+
+        return Pair(hour, minute)
+    }
+
+
+
+    public fun allow_video_call(){
+        main_video_call_button = findViewById(R.id.main_video_call_button)
+        main_video_call_button.setOnClickListener {
+            Log.d("GeminiResponseHandler", "Video Call Button Clicked!")
+            val intent = Intent(this,AgoraSDKTrial::class.java)
+            startActivity(intent)
+        }
+    }
+
+
+
+
+
 
 
     fun matching() {
@@ -153,7 +212,9 @@ class The_main_workout_match_activity : AppCompatActivity() {
                                         .addOnSuccessListener { document ->
                                             if (document.exists()) {
                                                 Log.d("FirestoreDebug", "Document retrieved: ${document.data}")
-
+                                                test_object.main_video_call_button = findViewById<Button>(R.id.main_video_call_button)
+                                                test_meeting_scheduler()
+                                                test_object.test_response = findViewById(R.id.interests)
                                                     var name = findViewById<TextView>(R.id.name)
                                                 var email = findViewById<TextView>(R.id.email)
                                                     var interest = findViewById<TextView>(R.id.interests)
@@ -171,7 +232,7 @@ class The_main_workout_match_activity : AppCompatActivity() {
                                             Log.e("FirestoreError", "Error fetching user data: ${e.message}")
                                         }
                                     setContentView(R.layout.matched_user_profile_layout)
-                                    Put_in_the_info_for_the_profile()
+
 
                                     var schedule_dialog = findViewById<Button>(R.id.schedule_dialog_button)
                                     schedule_dialog.setOnClickListener{
@@ -194,11 +255,22 @@ class The_main_workout_match_activity : AppCompatActivity() {
 
     }
 
+
+
+
+
+
     suspend fun call_finalize_schedule(){
         finalize_the_schedule_time()
     }
 
-        // webrtc section
+
+
+
+
+
+
+
 
 
     }
@@ -236,17 +308,11 @@ class The_main_workout_match_activity : AppCompatActivity() {
             }
     }
 
-    fun deletematch() {
-        var firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
-        Thread {
-            firestore.collection("users").document(current_user_id).collection("matches")
-                .document(match_id).delete().addOnSuccessListener {
-                }
 
-        }
 
-    }
+
+
 
 
 
@@ -307,6 +373,10 @@ class The_main_workout_match_activity : AppCompatActivity() {
 
     }
 
+
+
+
+
 suspend fun sendToGeminiForScheduling(
     currentUserDays: String,
     currentUserStartTime: String?,
@@ -314,6 +384,8 @@ suspend fun sendToGeminiForScheduling(
     matchedUserDays: String,
     matchedUserStartTime: String?,
     matchedUserEndTime: String?
+
+
 ) {
     val apiKey:String = "AIzaSyDJW69wH1BqmlnSu7XoK9Avhp5v8q_PuE4"
     val model = GenerativeModel(
@@ -329,55 +401,58 @@ suspend fun sendToGeminiForScheduling(
             responseMimeType = "text/plain"
         },
     )
+
+
     val prompt = """
         Find the best available time for two users based on their schedules.
-        User 1: Available on $currentUserDays from $currentUserStartTime to $currentUserEndTime
-        User 2: Available on $matchedUserDays from $matchedUserStartTime to $matchedUserEndTime
-        Suggest a single best time slot where both users are available. Return the answer in JSON format like - 
-        
-        {
-        "best_day": "Tuesday",
-        "start_time": "4:00 AM",
-        "end_time": "5:00 AM"
-        }
+
+### User Schedules:
+- **User 1:** Available on $currentUserDays from $currentUserStartTime to $currentUserEndTime.
+- **User 2:** Available on $matchedUserDays from $matchedUserStartTime to $matchedUserEndTime.
+
+### Instructions:
+1. **Identify the overlapping time slot** where both users are available.
+2. If one user's availability **spans midnight**, interpret it correctly as a next-day availability.
+3. Prioritize the **earliest available overlapping time slot**.
+4. If **no overlap exists**, return:
+   ```json
+   {
+       "best_day": "None",
+       "start_time": "None",
+       "end_time": "None"
+   }
     """.trimIndent()
 
-    val baseUrl = "https://generativelanguage.googleapis.com/v1beta/"
 
-    val retrofit = Retrofit.Builder()
-        .baseUrl(baseUrl)  // ✅ Corrected base URL (ends with '/')
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val response = model.generateContent(prompt) // ✅ Correct variable name
 
-    val apiService = retrofit.create(GeminiApiService::class.java)
-
-    try {
-        val response = apiService.generateResponse(
-            apiKey,
-            GeminiDataPrompt(prompt)
-        )
-
-        if (response != null) {
-            GeminiResponseHandler(response).handleResponse()
-        } else {
-            Log.e("GeminiScheduling", "Received null response from API")
+            withContext(Dispatchers.Main) {
+                test_object.test_response.text = response.text  // ✅ Using the correct variable
+            }
+        } catch (e: Exception) {
+            Log.e("GeminiScheduling", "API request failed: ${e.message}")
         }
-    } catch (e: Exception) {
-        Log.e("GeminiScheduling", "API request failed: ${e.message}")
     }
+    val baseUrl = "https://generativelanguage.googleapis.com/v1beta/"
 }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
     // Retrofit API Service
-    interface GeminiApiService {
-        @Headers("Content-Type: application/json")
-        @POST(".")
-        suspend fun generateResponse(
-            @Query("key") apiKey: String,
-            @Body requestBody: GeminiDataPrompt
-        ): GeminiResponse
-    }
+
 
     // Data Classes
     data class GeminiDataPrompt(val prompt: String)
@@ -401,7 +476,10 @@ suspend fun sendToGeminiForScheduling(
     // Response Handler
     class GeminiResponseHandler(private val response: GeminiResponse) {
 
+
         fun handleResponse() {
+
+
             val promptActualResponse = response.candidates?.firstOrNull()
                 ?.content?.parts?.firstOrNull()?.texts?.firstOrNull()
 
@@ -419,60 +497,21 @@ suspend fun sendToGeminiForScheduling(
 
                 Log.d("GeminiResponseHandler", "Best Day: $bestDay, Start Time: $startTime, End Time: $endTime")
 
-                scheduleMeetingReminder(bestDay, startTime)
+               // scheduleMeetingReminder(bestDay, startTime)
 
             } catch (e: JSONException) {
                 Log.e("GeminiResponseHandler", "Error parsing response: ${e.message}")
             }
         }
 
-        private fun scheduleMeetingReminder(bestDay: String, startTime: String) {
-            CoroutineScope(Dispatchers.Main).launch {
-                while (true) {
-                    delay(30000) // Check every 30 seconds
 
-                    val calendar = Calendar.getInstance()
-                    val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault())
-                    val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-                    val currentMinute = calendar.get(Calendar.MINUTE)
-
-                    val (meetingHour, meetingMinute) = parseTime(startTime)
-
-                    if (currentDay == bestDay && currentHour == meetingHour && currentMinute == meetingMinute) {
-                        Log.d("GeminiResponseHandler", "Meeting time reached! Showing call button.")
-
-                        // Perform UI updates safely
-                        withContext(Dispatchers.Main) {
-                            matchedUserProfileLayoutBinding?.mainVideoCallButton?.visibility = View.VISIBLE
-                            matchedUserProfileLayoutBinding?.mainVideoCallButton?.setOnClickListener {
-                                Log.d("GeminiResponseHandler", "Video Call Button Clicked!")
-                                // TODO: Implement call initiation logic
-                            }
-                        }
-                        break // Stop checking once the meeting time is reached
-                    }
-                }
-            }
-        }
-
-        private fun parseTime(time: String): Pair<Int, Int> {
-            val timeParts = time.split(" ")
-            val timeValues = timeParts[0].split(":").map { it.toInt() }
-            val isPM = timeParts[1].equals("PM", ignoreCase = true)
-
-            var hour = timeValues[0]
-            val minute = timeValues.getOrElse(1) { 0 }
-
-            if (isPM && hour != 12) {
-                hour += 12
-            } else if (!isPM && hour == 12) {
-                hour = 0
-            }
-
-            return Pair(hour, minute)
-        }
     }
-fun Put_in_the_info_for_the_profile() {
 
-}
+
+
+
+
+
+
+
 

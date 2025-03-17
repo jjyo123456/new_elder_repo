@@ -84,6 +84,10 @@ dependencies {
     implementation(libs.play.services.base)
 
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+    implementation("io.agora.rtc:full-sdk:4.5.0")
+
+
 }
 
 
