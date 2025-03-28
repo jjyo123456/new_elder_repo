@@ -4,6 +4,8 @@ calls = "2.7.18"
 cameraCore = "1.4.1"
 firebaseBom = "33.10.0"
 firebaseBomVersion = "32.7.1"
+googleTasksVision = "v0.10.14"
+googleTasksVisionVersion = "0.1.0-alpha-5"
 kotlin = "1.9.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -20,6 +22,7 @@ playServicesLocation = "21.3.0"
 retrofit = "2.11.0"
 tasksVision = "latest.release"
 generativeai = "0.9.0"
+tasksVisionVersion = "0.20230731"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
@@ -40,11 +43,14 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 google-services = { group = "com.google.gms", name = "google-services", version.ref = "googleServices" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+mediapipe-tasks-vision-v010alpha5 = { module = "com.google.mediapipe:tasks-vision", version.ref = "googleTasksVisionVersion" }
 play-services-base = { module = "com.google.android.gms:play-services-base", version.ref = "playServicesBase" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 tasks-vision = { module = "com.google.mediapipe:tasks-vision", version.ref = "tasksVision" }
 generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
+tasks-vision-v010alpha5 = { module = "com.google.mediapipe:tasks-vision", version.ref = "tasksVisionVersion" }
+tasks-vision-vv01014 = { module = "com.google.mediapipe:tasks-vision", version.ref = "googleTasksVision" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

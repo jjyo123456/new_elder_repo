@@ -13,12 +13,19 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.camera2.Camera2Config
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraXConfig
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.test_application_for_elder_project.databinding.ActivityWebrtcSetupoBinding
 import com.example.test_application_for_elder_project.databinding.MatchedUserProfileLayoutBinding
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -31,6 +38,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.webrtc.Camera1Enumerator
 import org.webrtc.Camera2Enumerator
+import org.webrtc.CameraEnumerator
 import org.webrtc.CameraVideoCapturer
 import org.webrtc.DataChannel
 import org.webrtc.DefaultVideoDecoderFactory
@@ -71,12 +79,16 @@ private lateinit var peerConnection: PeerConnection
 private lateinit var localVideoTrack: VideoTrack
 private lateinit var remoteVideoTrack: VideoTrack
 private var videoCapturer: VideoCapturer? =null
+public  var localview: SurfaceViewRenderer? = null
 
 
 lateinit var roomid_global_varriable:String
 private val CAMERA_PERMISSION_CODE = 101
 
-class Webrtc_setupo : AppCompatActivity() {
+private lateinit var previewView: PreviewView
+private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
+
+class Webrtc_setupo : AppCompatActivity(),CameraXConfig.Provider {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -102,11 +114,15 @@ class Webrtc_setupo : AppCompatActivity() {
         }
 
 
+        previewView = findViewById(R.id.local_video_view)
+
+        startCamera()
 
 
             // binding.button5.setOnClickListener({
        //     matching()
        // })
+
 
 
     }
@@ -148,9 +164,13 @@ class Webrtc_setupo : AppCompatActivity() {
         val eglBase = EglBase.createEgl14(EglBase.CONFIG_PLAIN)
         val eglBaseContext: EglBase.Context = eglBase.eglBaseContext
 
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(context, "Initializing WebRTC", Toast.LENGTH_SHORT).show()
+        }
+
         Executors.newSingleThreadExecutor().execute {
             PeerConnectionFactory.initialize(
-                PeerConnectionFactory.InitializationOptions.builder(applicationContext)
+                PeerConnectionFactory.InitializationOptions.builder(context.applicationContext)
                     .createInitializationOptions()
             )
 
@@ -158,6 +178,10 @@ class Webrtc_setupo : AppCompatActivity() {
                 .setVideoDecoderFactory(DefaultVideoDecoderFactory(eglBaseContext))
                 .setVideoEncoderFactory(DefaultVideoEncoderFactory(eglBaseContext, true, true))
                 .createPeerConnectionFactory()
+
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(context, "PeerConnectionFactory Created", Toast.LENGTH_SHORT).show()
+            }
 
             val iceServers = listOf(
                 PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer()
@@ -169,48 +193,38 @@ class Webrtc_setupo : AppCompatActivity() {
 
                 override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
                     Log.d("WebRTC", "ICE Connection State: $state")
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(context, "ICE Connection State: $state", Toast.LENGTH_SHORT).show()
+                    }
                 }
 
-                override fun onIceConnectionReceivingChange(receiving: Boolean) {}
+                override fun onIceConnectionReceivingChange(p0: Boolean) {}
 
-                override fun onIceGatheringChange(state: PeerConnection.IceGatheringState?) {}
+                override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {}
 
                 override fun onIceCandidate(candidate: IceCandidate?) {
                     candidate?.let {
                         Log.d("WebRTC", "New ICE Candidate: ${it.sdp}")
                         send_ice_candidate_to_firebase(it)
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(context, "New ICE Candidate Generated", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
 
-                override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>?) {
-                    candidates?.let { peerConnection?.removeIceCandidates(it) }
+                override fun onIceCandidatesRemoved(p0: Array<out IceCandidate>?) {}
+
+                override fun onAddStream(p0: MediaStream?) {
+                    p0?.videoTracks?.get(0)?.addSink(localview)
                 }
 
-                override fun onAddStream(stream: MediaStream?) {
-                    Log.d("WebRTC", "Media Stream Added")
-                }
+                override fun onRemoveStream(p0: MediaStream?) {}
 
-                override fun onRemoveStream(stream: MediaStream?) {}
-
-                override fun onAddTrack(receiver: RtpReceiver?, mediaStreams: Array<out MediaStream>?) {}
-
-                override fun onDataChannel(dataChannel: DataChannel?) {
-                    dataChannel?.registerObserver(object : DataChannel.Observer {
-                        override fun onMessage(buffer: DataChannel.Buffer?) {
-                            buffer?.let {
-                                val data = ByteArray(it.data.remaining())
-                                it.data.get(data)
-                                Log.d("WebRTC", "DataChannel message: ${String(data)}")
-                            }
-                        }
-                        override fun onStateChange() {
-                            Log.d("WebRTC", "DataChannel state changed: ${dataChannel.state()}")
-                        }
-                        override fun onBufferedAmountChange(previousAmount: Long) {}
-                    })
-                }
+                override fun onDataChannel(p0: DataChannel?) {}
 
                 override fun onRenegotiationNeeded() {}
+
+                override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {}
             })!!
 
             Handler(Looper.getMainLooper()).post {
@@ -219,87 +233,111 @@ class Webrtc_setupo : AppCompatActivity() {
         }
     }
 
+
     private fun setupLocalMedia(context: Context, eglBaseContext: EglBase.Context) {
-        val localview = findViewById<SurfaceViewRenderer>(R.id.local_video_view)
+       //  localview = findViewById<SurfaceViewRenderer>(R.id.local_video_view)
         val remoteview = findViewById<SurfaceViewRenderer>(R.id.remote_video_view)
 
-        if (localview == null || remoteview == null) {
-            Log.e("WebRTC", "Video views not found!")
-            return
-        }
 
-        // ✅ Release any previous video capturer before starting a new one
-        releaseVideoCapturer()
 
-        // ✅ Use same EGL context for both views
-        localview.init(eglBaseContext, null)
-        localview.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
-        localview.setMirror(true)
-        localview.setEnableHardwareScaler(true)
+        Toast.makeText(context, "Setting up local media", Toast.LENGTH_SHORT).show()
 
+       // localview!!.init(eglBaseContext, null)
         remoteview.init(eglBaseContext, null)
-        remoteview.setMirror(false)
-        remoteview.setEnableHardwareScaler(true)
 
-        // ✅ Ensure video capturer is initialized properly
-        videoCapturer = video_capture_function() ?: run {
+        Log.d("WebRTC", "Initializing Video Capturer...")
+        videoCapturer = createVideoCapturer() ?: run {
             Log.e("WebRTC", "Video capturer initialization failed!")
+            Toast.makeText(context, "Video Capturer Initialization Failed!", Toast.LENGTH_LONG).show()
             return
         }
 
-        val surfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", eglBaseContext)
-        val videoSource = peerConnectionFactory.createVideoSource(videoCapturer!!.isScreencast())
+        val surfaceTextureHelper = SurfaceTextureHelper.create(Thread.currentThread().name, eglBaseContext)
+        if (surfaceTextureHelper == null) {
+            Log.e("WebRTC", "SurfaceTextureHelper creation failed!")
+            return
+        }
+
+        if (!::peerConnectionFactory.isInitialized) {
+            Log.e("WebRTC", "PeerConnectionFactory is not initialized!")
+            return
+        }
+
+        val videoSource = peerConnectionFactory.createVideoSource(videoCapturer!!.isScreencast)
         videoCapturer!!.initialize(surfaceTextureHelper, applicationContext, videoSource.capturerObserver)
+
+        Toast.makeText(context, "Video Capturer Initialized", Toast.LENGTH_SHORT).show()
 
         val videoTrack = peerConnectionFactory.createVideoTrack("local_track", videoSource)
         videoTrack.setEnabled(true)
-        videoTrack.addSink(localview)
+       // videoTrack.addSink(localview)
 
         try {
-            videoCapturer!!.startCapture(720, 480, 30)
+            Log.d("WebRTC", "Starting video capture...")
+            videoCapturer!!.startCapture(720, 480, 20)
+            Toast.makeText(context, "Video Capture Started", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Log.e("WebRTC", "Error starting video capture: ${e.message}")
+            Toast.makeText(context, "Error starting capture: ${e.message}", Toast.LENGTH_LONG).show()
         }
-
-        val audioSource = peerConnectionFactory.createAudioSource(MediaConstraints())
-        val audioTrack = peerConnectionFactory.createAudioTrack("local_audio", audioSource)
-        audioTrack.setEnabled(true)
-
-        val localMediaStream = peerConnectionFactory.createLocalMediaStream("localStream")
-        localMediaStream.addTrack(videoTrack)
-        localMediaStream.addTrack(audioTrack)
-
-        peerConnection.addStream(localMediaStream)
     }
 
-    // ✅ Properly release the previous video capturer
-    private fun releaseVideoCapturer() {
-        try {
-            videoCapturer?.let {
-                it.stopCapture()
-                it.dispose()
+    // ✅ Corrected createVideoCapturer() function
+    private fun createVideoCapturer(): VideoCapturer? {
+        val enumerator: CameraEnumerator = if (Camera2Enumerator.isSupported(applicationContext)) {
+            Camera2Enumerator(applicationContext)
+        } else {
+            Camera1Enumerator(true)
+        }
+
+        val cameraEventsHandler = object : CameraVideoCapturer.CameraEventsHandler {
+            override fun onCameraError(error: String) {
+                Log.e("WebRTC", "Camera error: $error")
             }
-            videoCapturer = null
-        } catch (e: Exception) {
-            Log.e("WebRTC", "Error releasing video capturer: ${e.message}")
+
+            override fun onCameraDisconnected() {
+                Log.w("WebRTC", "Camera disconnected")
+            }
+
+            override fun onCameraFreezed(error: String) {
+                Log.e("WebRTC", "Camera froze: $error")
+            }
+
+            override fun onCameraOpening(cameraName: String) {
+                Log.d("WebRTC", "Opening camera: $cameraName")
+            }
+
+            override fun onFirstFrameAvailable() {
+                Log.d("WebRTC", "First frame available")
+            }
+
+            override fun onCameraClosed() {
+                Log.d("WebRTC", "Camera closed")
+            }
         }
+
+        // Try to get the front-facing camera first
+        for (deviceName in enumerator.deviceNames) {
+            if (enumerator.isFrontFacing(deviceName)) {
+                val capturer = enumerator.createCapturer(deviceName, cameraEventsHandler)
+                if (capturer != null) {
+                    Log.d("WebRTC", "Using front camera: $deviceName")
+                    return capturer
+                }
+            }
+        }
+
+        // If no front camera, try any available camera
+
+
+        Log.e("WebRTC", "No suitable camera found!")
+        return null // No camera found
     }
+
+
 
     // ✅ Check if Camera is already in use
-    fun isCameraInUse(): Boolean {
-        val cameraManager = applicationContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        return try {
-            for (id in cameraManager.cameraIdList) {
-                val state = cameraManager.getCameraCharacteristics(id)
-                    .get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
-                if (state != null) return true
-            }
-            false
-        } catch (e: Exception) {
-            Log.e("WebRTC", "Camera check failed: ${e.message}")
-            false
-        }
-    }
+
 
     // ✅ Properly stop video capture when activity is destroyed
     override fun onDestroy() {
@@ -316,29 +354,6 @@ class Webrtc_setupo : AppCompatActivity() {
 
 
 
-    private fun video_capture_function(): CameraVideoCapturer {
-        val enumerator = if (Camera2Enumerator.isSupported(applicationContext)) {
-            Camera2Enumerator(applicationContext)
-        } else {
-            Camera1Enumerator(true)  // Use Camera1 if Camera2 isn't supported
-        }
-
-        val eventsHandler = object : CameraVideoCapturer.CameraEventsHandler {
-            override fun onCameraError(error: String?) { Log.e("WebRTC", "Camera Error: $error") }
-            override fun onCameraDisconnected() { Log.e("WebRTC", "Camera Disconnected") }
-            override fun onCameraFreezed(error: String?) { Log.e("WebRTC", "Camera Freeze: $error") }
-            override fun onCameraOpening(cameraName: String?) { Log.d("WebRTC", "Camera Opening: $cameraName") }
-            override fun onFirstFrameAvailable() { Log.d("WebRTC", "First Frame Available") }
-            override fun onCameraClosed() { Log.d("WebRTC", "Camera Closed") }
-        }
-
-        for (deviceName in enumerator.deviceNames) {
-            if (enumerator.isFrontFacing(deviceName)) {
-                return enumerator.createCapturer(deviceName, eventsHandler)
-            }
-        }
-        throw IllegalStateException("No Front Camera Found!")
-    }
 
 
 
@@ -355,11 +370,10 @@ class Webrtc_setupo : AppCompatActivity() {
 
                 showExecutionStep(applicationContext,roomid)
 
-                showExecutionStep(applicationContext,"1")
-                CoroutineScope(Dispatchers.IO).launch {
+
 
                     setupFirebaseListener(roomid)
-                }
+
             }
 
         }
@@ -371,7 +385,6 @@ class Webrtc_setupo : AppCompatActivity() {
         val roomId: String = UUID.randomUUID().toString()
         val dbref = database.reference.child("matched_users")
         dbref.child(userid).push().setValue(roomId).addOnSuccessListener {
-            showExecutionStep(this,"2")
             callback(roomId)
         }
 
@@ -384,9 +397,9 @@ class Webrtc_setupo : AppCompatActivity() {
 
 
 
-    public fun setupFirebaseListener(roomId: String) {
+    fun setupFirebaseListener(roomId: String) {
         val dbRef = database.reference.child("calls").child(roomId)
-
+        showExecutionStep(this,"firebaslistener")
         // ✅ Listen for Offer
         dbRef.child("offer").child(UserManager.current_userId.toString())
             .addListenerForSingleValueEvent(object : ValueEventListener {
@@ -401,7 +414,7 @@ class Webrtc_setupo : AppCompatActivity() {
                                 it["description"] ?: ""
                             )
                             peerConnection.setRemoteDescription(SdpObserverImpl(peerConnection, false), offer)
-                            createAnswer(roomId)  // Create answer after setting offer
+                            createAnswer()  // Create answer after setting offer
                         }
                     } else {
                         Log.e("FirebaseDebug", "Offer does NOT exist, creating offer")
@@ -470,25 +483,34 @@ class Webrtc_setupo : AppCompatActivity() {
 
 
 
-    public fun createAnswer(roomId: String) {
+
+    public fun createAnswer() {
         val sdpConstraints = MediaConstraints()
-        peerConnection?.createAnswer(object : SdpObserver {
+        peerConnection.createAnswer(object : SdpObserver {
             override fun onCreateSuccess(sessionDescription: SessionDescription) {
                 Log.d("WebRTC", "Answer created successfully")
 
                 // ✅ Set local description first before sending answer
-                peerConnection?.setLocalDescription(object : SdpObserver {
+                peerConnection.setLocalDescription(object : SdpObserver {
+                    override fun onCreateSuccess(p0: SessionDescription?) {
+
+                    }
+
                     override fun onSetSuccess() {
                         Log.d("WebRTC", "Local description set successfully for Answer")
-                        sendAnswerToFirebase(roomId, sessionDescription)
+                        sendAnswerToFirebase(roomid_global_varriable, sessionDescription)
                     }
+
+                    override fun onCreateFailure(p0: String?) {
+                        TODO("Not yet implemented")
+                    }
+
 
                     override fun onSetFailure(error: String?) {
                         Log.e("WebRTC", "Failed to set local description for Answer: $error")
                     }
 
-                    override fun onCreateSuccess(sessionDescription: SessionDescription) {}
-                    override fun onCreateFailure(error: String?) {}
+
                 }, sessionDescription)
             }
 
@@ -521,7 +543,7 @@ class Webrtc_setupo : AppCompatActivity() {
 
     public fun createOffer(roomId: String) {
         val sdpConstraints = MediaConstraints()
-        peerConnection?.createOffer(object : SdpObserver {
+        peerConnection.createOffer(object : SdpObserver {
             override fun onCreateSuccess(sessionDescription: SessionDescription) {
                 Log.d("WebRTC", "Offer created successfully")
 
@@ -622,6 +644,42 @@ class Webrtc_setupo : AppCompatActivity() {
     fun showExecutionStep(context: Context,stepcounter:String) {
         // Increment step count
         Toast.makeText(context, "Executed till here: $stepcounter", Toast.LENGTH_SHORT).show()
+    }
+
+
+
+
+
+
+    // the preview based local video code
+    private fun startCamera() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener({
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            bindCameraToLifecycle(cameraProvider)
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun bindCameraToLifecycle(cameraProvider: ProcessCameraProvider) {
+        val preview = Preview.Builder().build()
+        val cameraSelector = CameraSelector.Builder()
+            .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+            .build()
+
+        preview.setSurfaceProvider(previewView.surfaceProvider)
+
+        try {
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+        } catch (e: Exception) {
+            Log.e("CameraX", "Use case binding failed", e)
+        }
+    }
+
+
+
+    override fun getCameraXConfig(): CameraXConfig {
+        return Camera2Config.defaultConfig()
     }
 
 

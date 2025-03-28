@@ -20,9 +20,9 @@ import kotlinx.coroutines.*
 
 class AgoraSDKTrial : AppCompatActivity() {
 
-    private val appid = "79b9b18c15b9430e9456b048a58e46dc"
-    private val token = "007eJxTYPh/jJn/h+cBAcko9ehDZsuFn85cXXrdPeFUxqFonR9rzxYpMJhbJlkmGVokG5omWZoYG6RampiaJRmYWCSaWqSamKUkv3h8Pb0hkJGhYcUpZkYGCATx+RjKU5OKSpLjkzMS8/JScxgYAOQuJS4="
-    private val channelName = "webrtc_channel"
+    private val appid = "a28881f29bc943abbf93740143303691"
+    private val token = "007eJxTYLCa+PbHEoXEo9MWNm7gbzP4GThT26+xjP3JkcibanorbixTYEg0srCwMEwzskxKtjQxTkxKSrM0NjcxMDQxNjYwNrM0TJV4kN4QyMhg+eoHMyMDBIL43Ax5qeXxyRmJeXmpOQwMAHFBIs8="
+    private val channelName = "new_channel"
 
     private var mRtcEngine: RtcEngine? = null
     private var localSurfaceView: SurfaceView? = null
@@ -89,7 +89,7 @@ class AgoraSDKTrial : AppCompatActivity() {
     }
 
     private fun initializeAgora() {
-        scope.launch {
+
             try {
                 val config = RtcEngineConfig().apply {
                     mContext = applicationContext
@@ -97,11 +97,12 @@ class AgoraSDKTrial : AppCompatActivity() {
                     mEventHandler = mRtcEventHandler
                 }
                 mRtcEngine = RtcEngine.create(config)
+                mRtcEngine!!.enableVideo()
                 joinChannel()
             } catch (e: Exception) {
                 uiHandler.post { showToast("Error initializing RTC: ${e.message}") }
             }
-        }
+
     }
 
     private fun joinChannel() {
@@ -162,4 +163,11 @@ class AgoraSDKTrial : AppCompatActivity() {
         }
         scope.cancel()  // Prevent memory leaks
     }
+
+
+
+
+    // separate
+
+
 }

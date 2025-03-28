@@ -21,7 +21,9 @@
             android:layout_marginStart="66dp"
             android:layout_marginTop="208dp"
             android:layout_marginEnd="66dp"
+            android:layout_marginBottom="349dp"
             android:hint="email"
+            app:layout_constraintBottom_toTopOf="@+id/button7"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -34,9 +36,9 @@
             android:layout_marginTop="20dp"
             android:layout_marginEnd="66dp"
             android:hint="password"
-            app:layout_constraintTop_toBottomOf="@+id/email"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/email" />
 
         <EditText
             android:id="@+id/editext_for_code"
@@ -46,9 +48,9 @@
             android:layout_marginTop="20dp"
             android:layout_marginEnd="65dp"
             android:hint="code for premade account"
-            app:layout_constraintTop_toBottomOf="@+id/password"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/password" />
 
         <Button
             android:id="@+id/log_in"
@@ -57,9 +59,9 @@
             android:layout_marginTop="30dp"
             android:text="Log In"
             android:textColorHint="@color/white"
-            app:layout_constraintTop_toBottomOf="@+id/editext_for_code"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/editext_for_code" />
 
         <Button
             android:id="@+id/sign_up"
@@ -68,9 +70,29 @@
             android:layout_marginTop="20dp"
             android:text="Sign Up"
             android:textColorHint="@color/white"
-            app:layout_constraintTop_toBottomOf="@+id/log_in"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/log_in" />
+
+        <Button
+            android:id="@+id/google_media"
+            android:layout_width="351dp"
+            android:layout_height="83dp"
+            android:layout_marginBottom="62dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.733"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/email"
+            app:layout_constraintVertical_bias="0.972" />
+
+        <Button
+            android:id="@+id/phsycology_test"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="phsycology_test"
+            tools:layout_editor_absoluteX="0dp"
+            tools:layout_editor_absoluteY="94dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
     <!-- Required hardware features -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-
-    <!-- Required permissions -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" /> <!-- Required permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
     <application
         android:allowBackup="true"
@@ -30,26 +29,42 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Test_application_for_elder_project">
 
-        <!-- Main Activity -->
+        <activity
+            android:name=".test_googlemedia_pipe"
+            android:exported="false" /> <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Other Activities -->
-        <activity android:name=".AgoraSDKTrial" android:exported="false" />
-        <activity android:name=".Sign_up" android:exported="true" />
-        <activity android:name=".Profile_for_family" android:exported="true" />
-        <activity android:name=".Schedule_dialog" android:exported="true" />
-        <activity android:name=".The_main_workout_match_activity" android:exported="true" />
+        </activity> <!-- Other Activities -->
+        <activity
+            android:name=".AgoraSDKTrial"
+            android:exported="false" />
+        <activity
+            android:name=".Sign_up"
+            android:exported="true" />
+        <activity
+            android:name=".Profile_for_family"
+            android:exported="true" />
+        <activity
+            android:name=".Schedule_dialog"
+            android:exported="true" />
+        <activity
+            android:name=".The_main_workout_match_activity"
+            android:exported="true" />
+        <activity
+            android:name=".googlemediapipe"
+            android:exported="true" />
         <activity
             android:name=".Webrtc_setupo"
-            android:exported="true"
-            android:screenOrientation="reverseLandscape" />
+            android:exported="true" />
+        <activity
+            android:name=".Phsycological_test"
+            android:exported="true" />
     </application>
 
 </manifest>

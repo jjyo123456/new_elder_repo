@@ -3,6 +3,7 @@ package com.example.test_application_for_elder_project
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +37,21 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        var b = findViewById<Button>(R.id.google_media)
+
+        b.setOnClickListener{
+            var i:Intent = Intent(applicationContext,test_googlemedia_pipe::class.java)
+            startActivity(i)
+        }
+
+        var a = findViewById<Button>(R.id.phsycology_test)
+
+        a.setOnClickListener{
+            var i:Intent = Intent(applicationContext,Phsycological_test::class.java)
+            startActivity(i)
+        }
+
 
         binding.logIn.setOnClickListener {
             val email = binding.email.text.toString().trim()

@@ -1,6 +1,6 @@
 package com.example.test_application_for_elder_project
 
-import android.graphics.Bitmap
+
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Paint
@@ -30,6 +30,9 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import android.graphics.Bitmap
+import android.graphics.Camera
+import android.graphics.Matrix
 
 class googlemediapipe : AppCompatActivity() {
     private lateinit var surfaceView: SurfaceView
@@ -56,8 +59,8 @@ class googlemediapipe : AppCompatActivity() {
         binding = ActivityWebrtcSetupoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        surfaceView = findViewById(R.id.surfaceView)
-        previewView = findViewById(R.id.previewView)
+
+
 
         setupFirebase()
         setupHandLandmarker()
@@ -74,6 +77,9 @@ class googlemediapipe : AppCompatActivity() {
     }
 
     private fun setupHandLandmarker() {
+        surfaceView = findViewById(R.id.surfaceView)
+        previewView = findViewById(R.id.previewView)
+
         val baseOptions = BaseOptions.builder().setModelAssetPath("hand_landmarker.task").build()
         val options = HandLandmarker.HandLandmarkerOptions.builder()
             .setBaseOptions(baseOptions)
@@ -88,8 +94,12 @@ class googlemediapipe : AppCompatActivity() {
                         drawForCurrentUser(result)
                     }
                 }
-            }
-            .build()
+            }.build()
+
+
+
+
+
 
         handLandmarker = HandLandmarker.createFromOptions(this, options)
     }
@@ -119,9 +129,9 @@ class googlemediapipe : AppCompatActivity() {
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
-                    it.setAnalyzer(cameraExecutor) { imageProxy ->
-                        processImageProxy(imageProxy)
-                    }
+                    it.setAnalyzer(cameraExecutor,ImageAnalysis.Analyzer { imageproxy ->
+                        processImageProxy(imageproxy)
+                    })
                 }
 
             val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
@@ -137,9 +147,29 @@ class googlemediapipe : AppCompatActivity() {
     }
 
     private fun processImageProxy(imageProxy: ImageProxy) {
-        val bitmap = imageProxy.toBitmap() ?: return
-        processFrame(bitmap)
-        imageProxy.close()
+      //  val bitmap = imageProxy.toBitmap() ?: return
+      //  processFrame(bitmap)
+      //  imageProxy.close()
+
+
+        // new code
+
+        var bitmapbuffer = Bitmap.createBitmap(imageProxy.width,imageProxy.height,Bitmap.Config.ARGB_8888)
+
+        var matrix = Matrix().apply{
+            postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+
+            postScale(-1f,1f,imageProxy.width.toFloat(),imageProxy.height.toFloat())
+        }
+
+        var final_bitmap = Bitmap.createBitmap(bitmapbuffer,0,0,bitmapbuffer.width,bitmapbuffer.height,matrix,true)
+
+        var MPimage = BitmapImageBuilder(final_bitmap).build()
+
+        val timestampMs = System.currentTimeMillis()
+        handLandmarker.detectAsync(MPimage,timestampMs)
+
+
     }
 
     private fun processFrame(bitmap: Bitmap) {
@@ -214,15 +244,13 @@ class googlemediapipe : AppCompatActivity() {
         databaseRef.child("coordinates").removeValue()
     }
 
-    private fun ImageProxy.toBitmap(): Bitmap? {
-        val buffer = planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-    }
+
 
     override fun onDestroy() {
         super.onDestroy()
         stopGame()
     }
+
+
 }
+

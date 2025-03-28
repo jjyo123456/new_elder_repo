@@ -17,6 +17,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86")) // ✅ Correct for Kotlin DSL
+        }
+
     }
 
     buildTypes {
@@ -39,7 +44,13 @@ android {
     buildFeatures{
         dataBinding = true
     }
+
+
+
+
 }
+
+
 
 dependencies {
     // Import the Firebase BoM (Always keep this at the top)
@@ -66,7 +77,7 @@ dependencies {
     implementation(libs.calls)
 
     // MediaPipe
-    implementation(libs.tasks.vision)
+
 
     // CameraX
     implementation(libs.androidx.camera.core)
@@ -86,6 +97,17 @@ dependencies {
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
 
     implementation("io.agora.rtc:full-sdk:4.5.0")
+
+
+
+
+
+    implementation (libs.mediapipe.tasks.vision.v010alpha5)
+    implementation (libs.tasks.vision)
+
+
+    // implementation ("com.google.mediapipe:tasks-vision:0.20230731")
+    implementation("io.coil-kt:coil:2.6.0")
 
 
 }
