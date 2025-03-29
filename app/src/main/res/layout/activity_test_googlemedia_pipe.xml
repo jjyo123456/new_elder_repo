@@ -4,32 +4,36 @@
     xmlns:tools="http://schemas.android.com/tools">
 
 
-
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="@+id/previewView"
+        app:layout_constraintTop_toBottomOf="@+id/previewView"
         tools:context=".test_googlemedia_pipe">
 
         <androidx.camera.view.PreviewView
             android:id="@+id/previewView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="3dp"
+            app:layout_constraintBottom_toTopOf="@+id/surfaceView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <SurfaceView
             android:id="@+id/surfaceView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_width="408dp"
+            android:layout_height="723dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:alpha="0.6"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:alpha="0.6"/>  <!-- Optional: Adjust transparency for overlay -->
+            app:layout_constraintTop_toBottomOf="@+id/previewView" />  <!-- Optional: Adjust transparency for overlay -->
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

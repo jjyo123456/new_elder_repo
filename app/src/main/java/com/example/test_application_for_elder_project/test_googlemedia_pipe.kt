@@ -1,7 +1,9 @@
 package com.example.test_application_for_elder_project
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ImageFormat
 import android.graphics.Matrix
@@ -9,12 +11,16 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.YuvImage
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.media.Image
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
+import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
@@ -42,6 +48,7 @@ import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.absoluteValue
 
 class test_googlemedia_pipe : AppCompatActivity() {
 
@@ -87,7 +94,7 @@ class test_googlemedia_pipe : AppCompatActivity() {
     }
 
     private fun setupHandLandmarker() {
-        surfaceView = findViewById(R.id.surfaceView)
+        surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
         previewView = findViewById(R.id.previewView)
 
         try {
@@ -97,10 +104,68 @@ class test_googlemedia_pipe : AppCompatActivity() {
                 .setBaseOptions(baseOptions)
                 .setRunningMode(RunningMode.LIVE_STREAM)
                 .setNumHands(1)
-                .setMinHandDetectionConfidence(0.1f)
-                .setMinHandPresenceConfidence(0.1f)
-                .setMinTrackingConfidence(0.1f)
-                .setResultListener(resultlistener)
+                .setMinHandDetectionConfidence(0.5f)
+                .setMinHandPresenceConfidence(0.5f)
+                .setMinTrackingConfidence(0.5f)
+                .setResultListener{ result, _ ->
+                Log.d("HandDetection", "Hand detection executed!")
+
+                if (result.landmarks().isNotEmpty()) {
+                    Log.d("HandDetection", "Hand detected! Total landmarks: ${result.landmarks().size}")
+
+                    val handLandmarks = result.landmarks()[0] // First detected hand
+                    val indexFingerTip = handLandmarks[8] // Index Finger Tip
+                    runOnUiThread {
+                        val holder = surfaceView.holder
+                        if (!holder.surface.isValid) {var a = 0;}
+
+                        var canvas: Canvas? = null
+                        try {
+                            canvas = holder.lockCanvas()
+                            if (canvas == null)
+
+                                if (canvas != null) {
+                                    canvas.drawColor(Color.RED)
+                                }
+
+
+                            runOnUiThread {
+                                val finalX = indexFingerTip.x().absoluteValue * surfaceView.width
+                                val finalY = indexFingerTip.y().absoluteValue * surfaceView.height
+
+                                if (finalX in 0f..surfaceView.width.toFloat() && finalY in 0f..surfaceView.height.toFloat()) {
+                                    if (lastX != -1f && lastY != -1f) {
+                                        path.lineTo(finalX, finalY)
+                                    } else {
+                                        path.moveTo(finalX, finalY)
+                                    }
+                                    lastX = finalX
+                                    lastY = finalY
+
+                                    // Draw circle at landmark for debugging
+                                    canvas.drawCircle(200f, 200f, 10f, paint);
+                                } else {
+                                    Log.e("DrawDebug", "Landmark coordinates out of bounds")
+                                }
+
+                                canvas.drawPath(path, paint)
+
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        } finally {
+                            // Always unlock canvas in finally block
+                            if (canvas != null) {
+                                holder.unlockCanvasAndPost(canvas)
+                            }
+                        }
+                    }
+                    Log.d("FingerCoords", "Index Finger Tip: (${indexFingerTip.x()}, ${indexFingerTip.y()})")
+
+                } else {
+                    Log.e("HandDetection", "No hand detected!")
+                }
+            }
                 .build()
 
 
@@ -108,16 +173,18 @@ class test_googlemedia_pipe : AppCompatActivity() {
 
 
 
+
             handLandmarker = HandLandmarker.createFromOptions(this, options)
+
             Log.d("innitialize", "HandLandmarker initialized successfully")
         }
         catch (e:Exception){
             Log.e("HandLandmarker", "Failed to initialize HandLandmarker", e)
         }
 
-    //
-    //
-    //  Toast.makeText(this, "handlandmarker", Toast.LENGTH_LONG).show()
+        //
+        //
+        //  Toast.makeText(this, "handlandmarker", Toast.LENGTH_LONG).show()
 
     }
 
@@ -164,7 +231,7 @@ class test_googlemedia_pipe : AppCompatActivity() {
             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
             override fun surfaceDestroyed(holder: SurfaceHolder) {}
         })
-      //  Toast.makeText(this, "setupdrawingcanvas", Toast.LENGTH_LONG).show()
+        //  Toast.makeText(this, "setupdrawingcanvas", Toast.LENGTH_LONG).show()
     }
 
     private fun startCamera() {
@@ -278,7 +345,7 @@ class test_googlemedia_pipe : AppCompatActivity() {
 
 
     private fun drawForCurrentUser(results: HandLandmarkerResult) {
-     //   showtext("detect_async")
+        //   showtext("detect_async")
         val holder = surfaceView.holder
         if (!holder.surface.isValid) return
 
@@ -322,5 +389,48 @@ class test_googlemedia_pipe : AppCompatActivity() {
 
     public fun showtext(given_text:String) {
         Toast.makeText(this, "$given_text", Toast.LENGTH_SHORT).show()
+    }
+
+
+    // get rotation degrees
+
+
+
+    // better for the camera2 api but since our program uses camerax not needed as of now
+    fun getCameraId(context: Context, isFrontCamera: Boolean): String? {
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        for (cameraId in cameraManager.cameraIdList) {
+            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+            val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
+
+            if (isFrontCamera && lensFacing == CameraCharacteristics.LENS_FACING_FRONT) {
+                return cameraId  // Return front camera ID
+            } else if (!isFrontCamera && lensFacing == CameraCharacteristics.LENS_FACING_BACK) {
+                return cameraId  // Return back camera ID
+            }
+        }
+        return null // Return null if no camera is found
+    }
+
+
+    public fun calculate_degress(){
+        var cameramanager = this.getSystemService(CAMERA_SERVICE) as CameraManager
+        var properties = getCameraId(this,true)?.let { cameramanager.getCameraCharacteristics(it) }
+        var orientation = properties?.get(CameraCharacteristics.SENSOR_ORIENTATION)
+
+        var windowmanager = this.getSystemService(WINDOW_SERVICE) as WindowManager
+        var rotation = windowmanager.defaultDisplay.rotation
+
+        val surfaceRotationDegrees = when (rotation) {
+            Surface.ROTATION_0 -> 0     // Portrait (default)
+            Surface.ROTATION_90 -> 270  // Landscape Left
+            Surface.ROTATION_180 -> 180 // Upside-down Portrait
+            Surface.ROTATION_270 -> 90  // Landscape Right
+            else -> 0
+        }
+    }
+
+     private fun just(x: Float, y: Float) {
+
     }
 }
